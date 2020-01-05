@@ -8,6 +8,12 @@ library(readxl)
 library(sf)
 
 #### Conveinence functions ####
+
+# prepend a given path with the path to the data folder
+data = function(dir) {
+  return (paste0(data_dir,dir))
+}
+
 deg_to_rad = function(x) {
   return(x*pi/180)
 }
@@ -15,8 +21,8 @@ deg_to_rad = function(x) {
 
 #### Load and clean data ####
 
-trees = read_excel(paste0(data_dir,"/ground_truth/emerald_point/field/EPT_tree_data.xlsx"),sheet=1)
-plots = read_excel(paste0(data_dir,"/ground_truth/emerald_point/field/EPT_tree_data.xlsx"),sheet=2)
+trees = read_excel(data("/ground_truth/emerald_point/field/EPT_tree_data.xlsx"),sheet=1)
+plots = read_excel(data("/ground_truth/emerald_point/field/EPT_tree_data.xlsx"),sheet=2)
 
 trees = trees %>%
   mutate(Distance = as.numeric(Distance))
@@ -108,6 +114,4 @@ trees_locs = trees_locs %>%
 
 trees_sp <- st_as_sf(trees_locs, coords = c("Easting","Northing"), crs = 32610)
 
-st_write(trees_sp %>% st_transform(4326),paste0(data_dir,"ground_truth/emerald_point/field/ept_trees.geojson"),delete_dsn=TRUE)
-
-         
+st_write(trees_sp %>% st_transform(4326),data("ground_truth/emerald_point/field/ept_trees.geojson"),delete_dsn=TRUE)
