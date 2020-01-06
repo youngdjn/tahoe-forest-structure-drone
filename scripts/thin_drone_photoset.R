@@ -5,8 +5,14 @@ library(sf)
 
 #### Parameters to set for each run (specific to a given photo set) ####
 
-# Top-level folder of all mission images
+# Top-level folder of all mission images. Do not include trailing slash.
 photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/14_EmPo_120m_95_95"
+
+# Path to save the thinned photoset to. Exclude the actual photoset folder(s) as they will be appended to the path provided here. Do not include trailing slash.
+destination_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions_thinned"
+
+# Name to prepend to all thinned sets based on this photoset
+photoset_name = "set14_120m_95_95_nadir_0ev"
 
 # Specify manual stringer images (images that MapPilot collects along the project boundary when moving from one transect to the next) to exclude if they're not picked up by the algorithm
 manual_stringer_photos = c("100MEDIA/DJI_0031.JPG","100MEDIA/DJI_0032.JPG","100MEDIA/DJI_0033.JPG","100MEDIA/DJI_0034.JPG","100MEDIA/DJI_0035.JPG","100MEDIA/DJI_0036.JPG")
@@ -20,7 +26,16 @@ tolerance = 3
 # What proportion of other transects have to be within the tolerance for the focal transect to not be considered a stringer transect?
 proportion_matching_threshold = .1
 
-
+## Specify thinning factors (forward then side, one row per thinned set)
+thins = matrix(c(1,1,
+                 1,2,
+                 2,1,
+                 2,2,
+                 2,4,
+                 4,2,
+                 4,4),
+               ncol=2,
+               byrow=TRUE)
 
 
 
@@ -28,6 +43,14 @@ proportion_matching_threshold = .1
 
 rad2deg = function(rad) {
   return(rad*180/pi)
+}
+
+# Drop the last "/..." (e.g., the file or final folder) from a path
+path_drop_last = function(x) {
+  elements = strsplit(x,split="/")[[1]]
+  elements_but_last = elements[1:(length(elements)-1)] 
+  shortened_path = paste(elements_but_last,collapse="/")
+  return(shortened_path)
 }
 
 
@@ -175,10 +198,12 @@ d_coords[!d_coords$stringer,"transect_id_new"] = d_coords[!d_coords$stringer,] %
 d_coords = d_coords %>%
   mutate(odd_transect_new = (transect_id_new %% 2))
 
+## Assign incrementing photo IDs
+
+
+
 
 ## Make it spatial again for checking results on a map
-
-
 d_tsect_sp = st_as_sf(d_coords,coords=c("X","Y"), crs=3310)
 
 plot(d_tsect_sp)
@@ -192,9 +217,36 @@ st_write(d_tsect_sp %>% st_transform(4326), "temp/temp_transect_eval.geojson",de
 # copy photosets with specified front and side thinning factor combinations (exclude stringers)
 # always generate a set with thinning factors of 1 and 1 which exclude stringers
 
+thins = as.data.frame(thins)
+names(thins) = c("forward_thin","side_thin")
 
+thins = thins %>%
+  mutate(thin_name = paste(forward_thin,side_thin,sep="_"))
 
-
-
-
-
+for(i in 1:nrow(thins)) {
+  
+  thin = thins[i,]
+  
+  photos_side_thin = d_coords %>%
+    filter(!stringer) %>%  # exclude stringers
+    filter((transect_id_new %% thin$side_thin) == 0)  # perform side thinning
+  
+  photos = photos_side_thin[seq(1,nrow(photos_side_thin),by=thin$forward_thin),]
+  
+  thinned_photoset_name = paste0(photoset_name,"_thin",thin$forward_thin,thin$side_thin)
+  
+  ## Copy thinned set to destination path
+  
+  # Get the necessary paths
+  photos = photos %>%
+    mutate(source_path = paste0(photoset_path,"/",Folder_File),
+           dest_path = paste0(destination_path,"/",thinned_photoset_name,"/",Folder_File)) %>%
+    mutate(dest_directory = dest_path %>% map(path_drop_last) %>% unlist ) # this is the destination file without the file at the end: for creating the directory for it via dir.create below
+  
+  # Make sure all needed directories exist
+  dest_directories = unique(photos$dest_directory)
+  walk(dest_directories,dir.create,recursive=TRUE)
+  
+  file.copy(photos$source_path,photos$dest_path, overwrite=FALSE)
+  
+}
