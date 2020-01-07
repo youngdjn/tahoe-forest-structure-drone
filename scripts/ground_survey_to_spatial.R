@@ -1,7 +1,7 @@
 #### Convert Weeks' Emerald Point ground-truth survey data into GeoJSON
 # Author: Derek Young
 
-data_dir = "C:/Users/DYoung/Box/projects/forestuav_data/"
+data_dir = "C:/Users/DYoung/Box/projects/tahoe-forest-structure-drone_data/"
 
 library(tidyverse)
 library(readxl)
@@ -16,8 +16,8 @@ source(here("scripts/convenience_functions.R"))
 
 #### Load and clean data ####
 
-trees = read_excel(data("/ground_truth/field_data/EPT_tree_data.xlsx"),sheet=1)
-plots = read_excel(data("/ground_truth/field_data/EPT_tree_data.xlsx"),sheet=2)
+trees = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=1)
+plots = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=2)
 
 trees = trees %>%
   mutate(Distance = as.numeric(Distance))

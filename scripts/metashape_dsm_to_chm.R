@@ -1,7 +1,7 @@
 ## Takes a USGS DEM (DTM) and a Metashape DSM and calculates a CHM
 
 # The root of the data directory
-data_dir = "C:/Users/DYoung/Box/projects/forestuav_data/"
+data_dir = "C:/Users/DYoung/Box/projects/tahoe-forest-structure-drone_data/"
 
 # Name of specific Metashape project for which to process Metashape products
 project_dir = "paramset001/"
