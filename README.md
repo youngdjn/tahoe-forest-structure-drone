@@ -1,4 +1,4 @@
-This is (/will be) a collection of scripts for evaluating how different drone imagery collection and processing parameters influence the quality of automatically generated tree stem maps.
+This is (/will be) a collection of scripts for evaluating how different drone imagery collection and processing parameters influence the quality of automatically generated tree maps.
 
 ## Workflow
 1) **Fly the study site** with multiple missions with different mission parameters (e.g., flight altitude, gimbal angle). Fly each mission at high image overlap so that photosets can be thinned later to additionally evaluate the influence of image overlap.
