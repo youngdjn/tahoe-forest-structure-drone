@@ -1,7 +1,6 @@
-# forestuav
 This is (/will be) a collection of scripts for evaluating how different drone imagery collection and processing parameters influence the quality of automatically generated tree stem maps.
 
-The workflow is:
+## Workflow
 1) **Fly the study site** with multiple missions with different mission parameters (e.g., flight altitude, gimbal angle). Fly each mission at high image overlap so that photosets can be thinned later to additionally evaluate the influence of image overlap.
 2) **Thin mission photosets** by selecting every *i*th photo in every *j*th transect (done by scripts/thin_drone_photoset.R).
 3) **Process each thinned photoset in Metashape** to produce a digital surface model (DSM) and point cloud using different sets of Metashape parameters. Outputs from Metashape are stored in `{data}/metashape_products/`. Logs/definitions of the flight and processig parameters associated with each set of Metashape outputs are in `{data}/parameter_set_definitions/`. Metashape is run using the [UC Davis Metashape scripts](https://github.com/ucdavis/metashape).
