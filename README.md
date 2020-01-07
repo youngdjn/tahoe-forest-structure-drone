@@ -10,4 +10,4 @@ This is (/will be) a collection of scripts for evaluating how different drone im
 8) **Spatially warp the ground-truth stem map to move trees into their "true" locations** (TO DO).
 7) **Compare the drone-derived stem maps to the ground-truth stem map** (TO DO).
 
-Data are stored on Box at: https://ucdavis.box.com/s/yxgngz750ommo73kz5akeac0q7ci5wgi (contact me for access). The top of every data-dependent script includes a line that can be changed to point to the top level of the data directory in your file system (e.g., via Box Drive). All data references within the scripts are appended to that top-level data directory path.
+**Data:** Data are stored on Box at https://ucdavis.box.com/s/yxgngz750ommo73kz5akeac0q7ci5wgi (contact me for access). The top of every data-dependent script includes a line that can be changed to point to the top level of the data directory in your file system (e.g., via Box Drive). All data references within the scripts are appended to that top-level data directory path.
