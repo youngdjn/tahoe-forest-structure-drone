@@ -22,6 +22,27 @@ plots = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=2)
 trees = trees %>%
   mutate(Distance = as.numeric(Distance))
 
+plots = plots %>%
+  filter(!is.na(Data_collection_location_1))
+
+
+## Check for duplicated plots
+cbind(plots$Plot,duplicated(plots$Plot))
+
+## Check for duplicated trees
+trees_simp = trees %>%
+  select(Plot,data_col_location,Status,Species,DBH,Height)
+
+trees_simp$duplicated = duplicated(trees_simp)
+
+
+## TEMPORARY exclude plot B2 because it has incomplete tree data
+trees = trees %>%
+  filter(Plot != "B2")
+
+## TEMPORARY exclude the second plot By2.75 because it is duplicated
+plots = plots %>%
+  filter(!(Plot == "By2.75" & `Data_collection_location_2_distance_from plot center_m` == 11.1))
 
 
 
@@ -73,8 +94,8 @@ for(i in 1:nrow(plots)) {
       loc_azimuth = plot[,loc_azimuth_column_number]
       loc_distance = plot[,loc_distance_column_number]
       
-      loc_x = plot$Easting + sin(deg2rad(loc_azimuth)) * loc_distance
-      loc_y = plot$Northing + cos(deg2rad(loc_azimuth)) * loc_distance
+      loc_x = plot$Easting + sin(deg2rad(loc_azimuth %>% as.numeric())) * loc_distance %>% as.numeric()
+      loc_y = plot$Northing + cos(deg2rad(loc_azimuth %>% as.numeric())) * loc_distance %>% as.numeric()
       
       plot_loc = data.frame(Plot = plot$Plot,
                             loc = loc,
@@ -109,4 +130,4 @@ trees_locs = trees_locs %>%
 
 trees_sp <- st_as_sf(trees_locs, coords = c("Easting","Northing"), crs = 32610)
 
-st_write(trees_sp %>% st_transform(4326),data("ground_truth/field/ept_trees.geojson"),delete_dsn=TRUE)
+st_write(trees_sp %>% st_transform(4326),data("ground_truth/field_data/ept_trees.geojson"),delete_dsn=TRUE)
