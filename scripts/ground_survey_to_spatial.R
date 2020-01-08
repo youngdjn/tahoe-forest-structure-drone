@@ -40,11 +40,6 @@ trees_simp$duplicated = duplicated(trees_simp)
 trees = trees %>%
   filter(Plot != "B2")
 
-## TEMPORARY exclude the second plot By2.75 because it is duplicated
-plots = plots %>%
-  filter(!(Plot == "By2.75" & `Data_collection_location_2_distance_from plot center_m` == 11.1))
-
-
 
 #### For each plot, get coords of each data collection location ####
 
@@ -119,15 +114,39 @@ trees_col_locs = left_join(trees,plots_locs,by=c("Plot"="Plot","data_col_locatio
 trees_locs = trees_col_locs %>%
   mutate(Easting = col_loc_easting + sin(deg2rad(Azimuth_converted)) * Distance,
          Northing = col_loc_northing + cos(deg2rad(Azimuth_converted)) * Distance)
-  
 
-#### Convert to spatial ####
 
+#### Give plot loc names easy-to-read numbers, and transfer to trees ####
+
+plots_locs$PlotID_simple = 1:nrow(plots_locs)
+
+plots_locs = plots_locs %>%
+  mutate(Plot_Loc = paste(Plot,loc,sep="_"))
+
+plots_names = plots_locs %>%
+  select(PlotID_simple,Plot_Loc)
+trees_locs = trees_locs %>%
+  mutate(Plot_Loc = paste(Plot,data_col_location,sep="_"))
+
+trees_locs = left_join(trees_locs,plots_names)
+
+
+
+#### Convert to spatial and write ####
+
+## Trees
 # need to drop trees without coordinates (they exist because of incomplete survey data)
 trees_locs = trees_locs %>%
   filter(!is.na(Easting))
 
-
 trees_sp <- st_as_sf(trees_locs, coords = c("Easting","Northing"), crs = 32610)
 
-st_write(trees_sp %>% st_transform(4326),data("ground_truth/field_data/ept_trees.geojson"),delete_dsn=TRUE)
+st_write(trees_sp %>% st_transform(4326),data("ground_truth/field_data/ept_trees_01.geojson"),delete_dsn=TRUE)
+
+
+## Plots
+plots_sp <- st_as_sf(plots_locs, coords = c("col_loc_easting","col_loc_northing"), crs = 32610)
+
+st_write(plots_sp %>% st_transform(4326),data("ground_truth/field_data/ept_plots_01.geojson"),delete_dsn=TRUE)
+
+
