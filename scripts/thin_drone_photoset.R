@@ -7,25 +7,28 @@ library(here)
 #### Parameters to set for each run (specific to a given photo set) ####
 
 # Top-level folder of all mission images. Do not include trailing slash.
-photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/14_EmPo_120m_95_95"
+photoset_path = "C:/Users/DYoung/Desktop/temp2/15a_EmPo_90m_95_95"
 
 # Path to save the thinned photoset to. Exclude the actual photoset folder(s) as they will be appended to the path provided here. Do not include trailing slash.
 destination_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions_thinned"
 
 # Name to prepend to all thinned sets based on this photoset
-photoset_name = "set14_120m_95_95_nadir_0ev"
+photoset_name = "set15a_90m_95_95_nadir_0ev"
 
 # Specify manual stringer images (images that MapPilot collects along the project boundary when moving from one transect to the next) to exclude if they're not picked up by the algorithm
-manual_stringer_photos = c("100MEDIA/DJI_0031.JPG","100MEDIA/DJI_0032.JPG","100MEDIA/DJI_0033.JPG","100MEDIA/DJI_0034.JPG","100MEDIA/DJI_0035.JPG","100MEDIA/DJI_0036.JPG")
+manual_stringer_photos = c("2019:09:10 11:12:42","2019:09:10 11:12:44","2019:09:10 11:12:47","2019:09:10 11:12:49","2019:09:10 11:12:52")
 
 # How many degrees (angle) change in transect path signals a new transect?
-change_thresh = 10
+change_thresh = 4
 
 ## Stringer detection:
 # Within how many degrees (in terms of the orientation of the transect) does a focal transect have to be from other transects to not be considered a stringer
 tolerance = 3
 # What proportion of other transects have to be within the tolerance for the focal transect to not be considered a stringer transect?
-proportion_matching_threshold = .1
+proportion_matching_threshold = .2
+
+# Min photos per transect to consider it a transect
+min_photos = 4
 
 ## Specify thinning factors (forward then side, one row per thinned set)
 thins = matrix(c(1,1,
@@ -37,7 +40,6 @@ thins = matrix(c(1,1,
                  4,4),
                ncol=2,
                byrow=TRUE)
-
 
 
 #### Convenience functions ####
@@ -54,13 +56,15 @@ source(here("scripts/convenience_functions.R"))
 ## Find all original drone photos (use regex to search for DJI photos in case there are some non-drone photos in the folder)
 photo_files = list.files(photoset_path,recursive=TRUE,pattern="DJI_[0-9]{4}.JPG",full.names = TRUE)
 
-d_exif = read_exif(photo_files, tags = c("ImageDescription","GPSLatitude","GPSLongitude"))
+d_exif = read_exif(photo_files , tags = c("ImageDescription","GPSLatitude","GPSLongitude","CreateDate"))
 
 d = d_exif %>%
-  select(ImageDescription,GPSLatitude,GPSLongitude) %>%
+  select(ImageDescription,GPSLatitude,GPSLongitude,CreateDate) %>%
   separate(ImageDescription,c(NA,"Folder","File"), sep = "\\\\") %>%
   unite("Folder_File",Folder,File,sep="/") %>%
-  arrange(Folder_File)    # put in the order they were flow
+  arrange(CreateDate,Folder_File)    # sort by time and then by name (in case any were from the same exact time, the name should increment)
+
+## get photo folder and name
 
 
 ## Make it spatial
@@ -89,8 +93,13 @@ for(i in 1:(nrow(d_coords)-1)) {
   
   hypotenuse = sqrt(x_dist^2 + y_dist^2)
   
-  angle = atan(y_dist/x_dist) %>% rad2deg # angle from one point to next
-  angle = ifelse(x_dist < 0, angle + 180,angle)
+  angle = atan2(   x_dist,y_dist  ) %>% rad2deg %>% abs # angle from one point to next
+  #angle = ifelse(x_dist < 0, angle + 180,angle)
+  
+  # Some times two photo points are directly on top of each other (DJI bug?), so consider them for transect-delineation purposes to be in the same transect. To do this need to save a code as -1 which the angle-difference computing script looks for
+  if(x_dist == 0 & y_dist == 0) {
+    angle = -1
+  }
   
   d_coords[i,"angle"] = angle
   
@@ -107,9 +116,11 @@ for(i in 2:(nrow(d_coords))) {
   
   angle_change = 360-(360-abs(current_angle-last_angle))
   
+  if (is.na(current_angle) | current_angle == -1 | last_angle == -1) {
+    angle_change = 0
+  }
+  
   d_coords[i,"angle_change"] = angle_change
-  
-  
   
 }
 
@@ -141,17 +152,22 @@ for(i in 1:nrow(d_coords)) {
   
 }
 
-
 ## Eliminate the stringers of points that MapPilot places along perimeter of flight area when going from one transect to the next
 ## Get average angle of each transect. Count number of transects with average angle within 3 degrees. If < 10% of transects are within 3 degree, it's a stringer
 
 transect_summ = d_coords %>%
+  filter(angle != -1) %>%  # Don't include points with no angle (two points on top of each other)
   group_by(transect_id) %>%
   slice(2:n()) %>% # drop the first photo of each group because it probably has a crazy angle
   slice(1:(n()-1)) %>% # drop the last row of each group because it could have a crazy angle
-  summarize(avg_angle = mean(angle))
+  summarize(avg_angle = mean(angle),
+            n_photos = n())
 
-n_transects = nrow(transect_summ)
+# only compare against transects that are not very short (probably MapPilot edge stringers)
+transects_long = transect_summ %>%
+  filter((n_photos + 2) > min_photos)
+
+n_transects = nrow(transects_long)
 
 
 for(i in 1:nrow(transect_summ)) {
@@ -160,17 +176,18 @@ for(i in 1:nrow(transect_summ)) {
   angle = transect$avg_angle
   transect_id = transect$transect_id
   
-  lower_bound = (angle-tolerance) %% 360
-  upper_bound = (angle+tolerance) %% 360
+  lower_bound = (angle-tolerance)
+  upper_bound = (angle+tolerance)
   
-  matching_transects = transect_summ %>%
-    filter((avg_angle > lower_bound) & (avg_angle < upper_bound))
+  matching_transects = transects_long %>%
+    filter((avg_angle < upper_bound | avg_angle < (upper_bound %% 360)) &
+             avg_angle > lower_bound | avg_angle > (lower_bound %% 360))
   
   n_matching = nrow(matching_transects)
   
   proportion_matching = n_matching/n_transects
   
-  if(proportion_matching < proportion_matching_threshold) {
+  if(proportion_matching < proportion_matching_threshold | (transect$n_photos + 2) < min_photos) {
     d_coords[d_coords$transect_id == transect_id,"stringer"] = TRUE
   } else {
     d_coords[d_coords$transect_id == transect_id,"stringer"] = FALSE
@@ -180,7 +197,9 @@ for(i in 1:nrow(transect_summ)) {
 
 
 # assign manual stringer photos
-d_coords[d_coords$Folder_File %in% manual_stringer_photos,"stringer"] = TRUE
+d_coords[d_coords$CreateDate %in% manual_stringer_photos,"stringer"] = TRUE
+
+
 
 
 ## Assign new transect IDs, but only to non-stringer transects
@@ -207,6 +226,9 @@ st_write(d_tsect_sp %>% st_transform(4326), "temp/temp_transect_eval.geojson",de
 
 # copy photosets with specified front and side thinning factor combinations (exclude stringers)
 # always generate a set with thinning factors of 1 and 1 which exclude stringers
+
+# reverse the thins so we do the small photosets first
+thins = thins[nrow(thins):1,]
 
 thins = as.data.frame(thins)
 names(thins) = c("forward_thin","side_thin")
