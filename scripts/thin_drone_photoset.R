@@ -276,6 +276,11 @@ names(thins_rev) = c("forward_thin","side_thin")
 thins_rev = thins_rev %>%
   dplyr::mutate(thin_name = paste(forward_thin,side_thin,sep="_"))
 
+## Give all photos an incrementing number in sequence so the front-thin photo selections are the same in each dataset
+d_coords$image_sequence_number = 1:nrow(d_coords)
+
+
+
 for(i in 1:nrow(thins_rev)) {
   
   thin = thins_rev[i,]
@@ -285,7 +290,7 @@ for(i in 1:nrow(thins_rev)) {
     filter((transect_id_new %% thin$side_thin) == 0)  # perform side thinning
   
   # perform forward thinning
-  photos = photos_side_thin[photos_side_thin$photo_id %in% seq(1,max(photos_side_thin$photo_id),by=thin$forward_thin),]
+  photos = photos_side_thin[(photos_side_thin$image_sequence_number %% thin$forward_thin) == 0,]
   
   thinned_photoset_name = paste0(photoset_name,"_thin",thin$forward_thin,thin$side_thin)
   
