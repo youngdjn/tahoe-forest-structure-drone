@@ -19,7 +19,7 @@ photoset_name = "set15a_90m_95_95_nadir_0ev"
 manual_stringer_photos = c("2019:09:10 11:12:42","2019:09:10 11:12:44","2019:09:10 11:12:47","2019:09:10 11:12:49","2019:09:10 11:12:52")
 
 # How many degrees (angle) change in transect path signals a new transect?
-change_thresh = 4
+change_thresh = 10
 
 ## Stringer detection:
 # Within how many degrees (in terms of the orientation of the transect) does a focal transect have to be from other transects to not be considered a stringer
@@ -56,15 +56,24 @@ source(here("scripts/convenience_functions.R"))
 ## Find all original drone photos (use regex to search for DJI photos in case there are some non-drone photos in the folder)
 photo_files = list.files(photoset_path,recursive=TRUE,pattern="DJI_[0-9]{4}.JPG",full.names = TRUE)
 
+get_last_2_and_join = function(x) {
+  last_2 = (x[(length(x)-1):length(x)])
+  joined = paste(last_2,collapse = "/")
+}
+
+photo_folder_file = str_split(photo_files,"/") %>% map(get_last_2_and_join) %>% unlist
+
+
 d_exif = read_exif(photo_files , tags = c("ImageDescription","GPSLatitude","GPSLongitude","CreateDate"))
 
 d = d_exif %>%
   select(ImageDescription,GPSLatitude,GPSLongitude,CreateDate) %>%
-  separate(ImageDescription,c(NA,"Folder","File"), sep = "\\\\") %>%
-  unite("Folder_File",Folder,File,sep="/") %>%
+  #separate(ImageDescription,c(NA,"Folder","File"), sep = "\\\\") %>%
+  mutate(Folder_File = photo_folder_file) %>%
   arrange(CreateDate,Folder_File)    # sort by time and then by name (in case any were from the same exact time, the name should increment)
 
-## get photo folder and name
+## add photo folder and name
+
 
 
 ## Make it spatial
@@ -199,16 +208,47 @@ for(i in 1:nrow(transect_summ)) {
 # assign manual stringer photos
 d_coords[d_coords$CreateDate %in% manual_stringer_photos,"stringer"] = TRUE
 
+## give each point the mean x coordinate of all its photos
+transect_summ = d_coords %>%
+  group_by(transect_id) %>%
+  summarize(mean_x_coord = mean(X))
+
+d_coords = left_join(d_coords,transect_summ)
+
+## Assign new transect IDs, but only to non-stringer transects, and do it by incrementing transects based on their average x coordinate 
+d_coords = d_coords %>%
+  arrange(mean_x_coord,CreateDate,Folder_File)
 
 
+#### !!!! here need to loop through each d_coord.
+# whenver hit a new transect_id, increment the count. assign the count as sorted_transect_id
 
-## Assign new transect IDs, but only to non-stringer transects
-d_coords[!d_coords$stringer,"transect_id_new"] = d_coords[!d_coords$stringer,] %>% group_indices(transect_id)
+transect_ids_encountered = NULL
+
+for(i in 1:nrow(d_coords)) {
+  
+  photo = d_coords[i,]
+  if(photo$stringer) next()
+  
+  transect_id = photo$transect_id
+  
+  if(!(transect_id %in% transect_ids_encountered)) {
+    transect_ids_encountered = c(transect_ids_encountered,transect_id)
+  }
+  
+  d_coords[i,"transect_id_new"] = length(transect_ids_encountered)
+  
+}
+
+
+# # redo numbering for only 
+# d_coords[!d_coords$stringer,"transect_id_new"] = d_coords[!d_coords$stringer,] %>% group_indices(transect_id)
 
 d_coords = d_coords %>%
   mutate(odd_transect_new = (transect_id_new %% 2))
 
 ## Assign incrementing photo IDs
+d_coords$photo_id = 1:nrow(d_coords)
 
 
 
@@ -228,23 +268,24 @@ st_write(d_tsect_sp %>% st_transform(4326), "temp/temp_transect_eval.geojson",de
 # always generate a set with thinning factors of 1 and 1 which exclude stringers
 
 # reverse the thins so we do the small photosets first
-thins = thins[nrow(thins):1,]
+thins_rev = thins[nrow(thins):1,]
 
-thins = as.data.frame(thins)
-names(thins) = c("forward_thin","side_thin")
+thins_rev = as.data.frame(thins_rev)
+names(thins_rev) = c("forward_thin","side_thin")
 
-thins = thins %>%
-  mutate(thin_name = paste(forward_thin,side_thin,sep="_"))
+thins_rev = thins_rev %>%
+  dplyr::mutate(thin_name = paste(forward_thin,side_thin,sep="_"))
 
-for(i in 1:nrow(thins)) {
+for(i in 1:nrow(thins_rev)) {
   
-  thin = thins[i,]
+  thin = thins_rev[i,]
   
   photos_side_thin = d_coords %>%
     filter(!stringer) %>%  # exclude stringers
     filter((transect_id_new %% thin$side_thin) == 0)  # perform side thinning
   
-  photos = photos_side_thin[seq(1,nrow(photos_side_thin),by=thin$forward_thin),]
+  # perform forward thinning
+  photos = photos_side_thin[photos_side_thin$photo_id %in% seq(1,max(photos_side_thin$photo_id),by=thin$forward_thin),]
   
   thinned_photoset_name = paste0(photoset_name,"_thin",thin$forward_thin,thin$side_thin)
   
