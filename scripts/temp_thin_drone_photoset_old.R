@@ -62,7 +62,7 @@ photo_files = list.files(photoset_path,recursive=TRUE,pattern="DJI_[0-9]{4}.JPG"
 d_exif = read_exif(photo_files, tags = c("ImageDescription","GPSLatitude","GPSLongitude"))
 
 d = d_exif %>%
-  select(ImageDescription,GPSLatitude,GPSLongitude) %>%
+  dplyr::select(ImageDescription,GPSLatitude,GPSLongitude) %>%
   separate(ImageDescription,c(NA,"Folder","File"), sep = "\\\\") %>%
   unite("Folder_File",Folder,File,sep="/") %>%
   arrange(Folder_File)    # put in the order they were flow
