@@ -6,10 +6,10 @@ library(sf)
 #### Parameters to set for each run (specific to a given photo set) ####
 
 # Top-level folder of all mission images. Do not include trailing slash.
-photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/14_EmPo_120m_95_95"
+photoset_path = "/storage/forestuav/imagery/missions/14_EmPo_95_95/"
 
 # Path to save the thinned photoset to. Exclude the actual photoset folder(s) as they will be appended to the path provided here. Do not include trailing slash.
-destination_path = "C:/Users/DYoung/Desktop/test_thin"
+destination_path = "/storage/forestuav/imagery/missions_thinned_test"
 
 # Name to prepend to all thinned sets based on this photoset
 photoset_name = "set14_120m_95_95_nadir_0ev"
@@ -223,17 +223,17 @@ thins = thins %>%
 d_coords$image_sequence_number = 1:nrow(d_coords)
 
 ###!!!## Fudge it by adding a certain amount to the sequence number. Add this much at these points:
-write.csv(d_coords,"C:/Users/DYoung/Desktop/test_thin/seq_num.csv")
-258 2
-500 0
-1034 2
-1584 0
-2068 2
-2292 0
-2504 2
-2696 3
-3004 2
-3232 3
+# write.csv(d_coords,"C:/Users/DYoung/Desktop/test_thin/seq_num.csv")
+# 258 2
+# 500 0
+# 1034 2
+# 1584 0
+# 2068 2
+# 2292 0
+# 2504 2
+# 2696 3
+# 3004 2
+# 3232 3
 
 length = nrow(d_coords)
 add = rep(0,length)
