@@ -6,7 +6,7 @@ library(sf)
 #### Parameters to set for each run (specific to a given photo set) ####
 
 # Top-level folder of all mission images. Do not include trailing slash.
-photoset_path = "/storage/forestuav/imagery/missions/14_EmPo_95_95/"
+photoset_path = "/storage/forestuav/imagery/missions/14_EmPo_120m_95_95/"
 
 # Path to save the thinned photoset to. Exclude the actual photoset folder(s) as they will be appended to the path provided here. Do not include trailing slash.
 destination_path = "/storage/forestuav/imagery/missions_thinned_test"
@@ -28,7 +28,11 @@ proportion_matching_threshold = .1
 
 ## Specify thinning factors (forward then side, one row per thinned set)
 thins = matrix(c(4,4,
+		 2,4,
+		 4,2,
                  2,2,
+		 1,2,
+		 2,1,
                  1,1),
                ncol=2,
                byrow=TRUE)
@@ -204,7 +208,7 @@ d_tsect_sp = st_as_sf(d_coords,coords=c("X","Y"), crs=3310)
 
 plot(d_tsect_sp)
 
-st_write(d_tsect_sp %>% st_transform(4326), "temp/temp_transect_eval.geojson",delete_dsn=TRUE)
+# st_write(d_tsect_sp %>% st_transform(4326), "temp/temp_transect_eval.geojson",delete_dsn=TRUE)
 
 
 
