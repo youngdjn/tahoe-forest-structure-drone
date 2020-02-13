@@ -20,7 +20,11 @@ trees = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=1)
 plots = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=2)
 
 trees = trees %>%
-  mutate(Distance = as.numeric(Distance))
+  mutate(ground_tree_id = 1:nrow(trees))
+  mutate(Distance = as.numeric(Distance)) %>%
+  filter(is.na(REMEASURED)) %>%
+  filter(ground_tree_id != 1212) %>%
+  filter(!(disance %in% c("?","NA")))
 
 plots = plots %>%
   filter(!is.na(Data_collection_location_1))
@@ -30,15 +34,9 @@ plots = plots %>%
 cbind(plots$Plot,duplicated(plots$Plot))
 
 ## Check for duplicated trees
-trees_simp = trees %>%
-  select(Plot,data_col_location,Status,Species,DBH,Height)
-
-trees_simp$duplicated = duplicated(trees_simp)
+trees$duplicated = duplicated( trees %>%  select(Plot,data_col_location,Status,Species,DBH,Height) )
 
 
-## TEMPORARY exclude plot B2 because it has incomplete tree data
-trees = trees %>%
-  filter(Plot != "B2")
 
 
 #### For each plot, get coords of each data collection location ####
