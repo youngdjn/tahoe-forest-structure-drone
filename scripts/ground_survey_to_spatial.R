@@ -20,11 +20,11 @@ trees = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=1)
 plots = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=2)
 
 trees = trees %>%
-  mutate(ground_tree_id = 1:nrow(trees))
+  mutate(ground_tree_id = 1:nrow(trees)) %>%
   mutate(Distance = as.numeric(Distance)) %>%
   filter(is.na(REMEASURED)) %>%
   filter(ground_tree_id != 1212) %>%
-  filter(!(disance %in% c("?","NA")))
+  filter(!(Distance %in% c("?","NA")))
 
 plots = plots %>%
   filter(!is.na(Data_collection_location_1))
@@ -35,6 +35,16 @@ cbind(plots$Plot,duplicated(plots$Plot))
 
 ## Check for duplicated trees
 trees$duplicated = duplicated( trees %>%  select(Plot,data_col_location,Status,Species,DBH,Height) )
+
+
+
+#### Map plot centers ####
+
+plot_centers_sp <- st_as_sf(plots, coords = c("Easting","Northing"), crs = 32610)
+
+st_write(plot_centers_sp %>% st_transform(4326),data("ground_truth/field_data/plot_centers.geojson"),delete_dsn=TRUE)
+
+
 
 
 
@@ -139,12 +149,12 @@ trees_locs = trees_locs %>%
 
 trees_sp <- st_as_sf(trees_locs, coords = c("Easting","Northing"), crs = 32610)
 
-st_write(trees_sp %>% st_transform(4326),data("ground_truth/field_data/ept_trees_02.geojson"),delete_dsn=TRUE)
+st_write(trees_sp %>% st_transform(4326),data("ground_truth/field_data/ept_trees_05.geojson"),delete_dsn=TRUE)
 
 
 ## Plots
 plots_sp <- st_as_sf(plots_locs, coords = c("col_loc_easting","col_loc_northing"), crs = 32610)
 
-st_write(plots_sp %>% st_transform(4326),data("ground_truth/field_data/ept_plots_02.geojson"),delete_dsn=TRUE)
+st_write(plots_sp %>% st_transform(4326),data("ground_truth/field_data/ept_plots_05.geojson"),delete_dsn=TRUE)
 
 
