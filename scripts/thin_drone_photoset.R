@@ -37,11 +37,11 @@ min_photos = 4
 
 ## Specify thinning factors (forward then side, one row per thinned set)
 thins = matrix(c(1,1,
-                 # 1,2,
-                 # 2,1,
-                 # 2,2,
-                 # 2,4,
-                 # 4,2,
+                 1,2,
+                 2,1,
+                 2,2,
+                 2,4,
+                 4,2,
                  4,4),
                ncol=2,
                byrow=TRUE)
