@@ -7,21 +7,21 @@ library(here)
 #### Parameters to set for each run (specific to a given photo set) ####
 
 # Top-level folder of all mission images. Do not include trailing slash.
-photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/21_EmPo_90_90_90m_25deg_-03ev_NS"
+photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/22_EmPo_90_90_90m_25deg_-03ev_EW"
 
 # Path to save the thinned photoset to. Exclude the actual photoset folder(s) as they will be appended to the path provided here. Do not include trailing slash.
 destination_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions_thinned"
 
 # Name to prepend to all thinned sets based on this photoset
-photoset_name = "set21"
+photoset_name = "set22"
 
 # Specify manual stringer images (images that MapPilot collects along the project boundary when moving from one transect to the next) to exclude if they're not picked up by the algorithm
 # for 15a: manual_stringer_photos = c("2019:09:10 11:12:42","2019:09:10 11:12:44","2019:09:10 11:12:47","2019:09:10 11:12:49","2019:09:10 11:12:52")
 # for 16: manual_stringer_photos = c("2019:09:11 11:34:10","2019:09:11 12:01:49","2019:09:11 12:02:45","2019:09:11 12:02:46","2019:09:11 12:03:39","2019:09:11 11:34:10","2019:09:11 11:12:05","2019:09:11 11:12:12","2019:09:11 11:12:13","2019:09:11 11:12:15","2019:09:11 11:12:18","2019:09:11 11:15:08","2019:09:11 11:15:10","2019:09:11 11:15:18","2019:09:11 11:12:07","2019:09:11 11:15:19","2019:09:11 11:12:19")
 # for 26: manual_stringer_photos = c("2019:09:11 14:47:32","2019:09:11 14:47:29","2019:09:11 14:47:27","2019:09:11 14:47:25","2019:09:11 14:47:22","2019:09:11 14:47:19","2019:09:11 14:47:17","2019:09:11 14:47:15","2019:09:11 14:47:11")
-
-# for 21
-manual_stringer_photos = c("2019:09:12 11:01:47", "2019:09:12 11:01:49", "2019:09:12 11:01:51", "2019:09:12 11:01:54")
+# for 21: manual_stringer_photos = c("2019:09:12 11:01:47", "2019:09:12 11:01:49", "2019:09:12 11:01:51", "2019:09:12 11:01:54")
+# for 22:
+manual_stringer_photos = NULL
 
 # How many degrees (angle) change in transect path signals a new transect?
 change_thresh = 8
@@ -37,11 +37,11 @@ min_photos = 4
 
 ## Specify thinning factors (forward then side, one row per thinned set)
 thins = matrix(c(1,1,
-                 1,2,
-                 2,1,
-                 2,2,
-                 2,4,
-                 4,2,
+                 # 1,2,
+                 # 2,1,
+                 # 2,2,
+                 # 2,4,
+                 # 4,2,
                  4,4),
                ncol=2,
                byrow=TRUE)
