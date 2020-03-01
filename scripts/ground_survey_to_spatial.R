@@ -19,6 +19,16 @@ source(here("scripts/convenience_functions.R"))
 trees = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=1)
 plots = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=2)
 
+
+### Make plots spatial and export to determine which set of coords is better. ###
+
+plots_sp <- st_as_sf(plots, coords = c("Easting","Northing"), crs = 32610)
+st_write(plots_sp %>% st_transform(4326), "temp/plots_raw.geojson", delete_dsn=TRUE)
+
+
+
+
+
 trees = trees %>%
   mutate(ground_tree_id = 1:nrow(trees)) %>%
   mutate(Distance = as.numeric(Distance)) %>%
