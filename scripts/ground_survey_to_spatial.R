@@ -12,20 +12,21 @@ library(here)
 
 source(here("scripts/convenience_functions.R"))
 
-
-
 #### Load and clean data ####
 
 trees = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=1)
 plots = read_excel(data("ground_truth/field_data/EPT_tree_data.xlsx"),sheet=2)
 
 
-### Make plots spatial and export to determine which set of coords is better. ###
+# ### Make plots spatial and export to determine which set of coords is better.
+# plots_sp <- st_as_sf(plots, coords = c("Easting","Northing"), crs = 32610)
+# st_write(plots_sp %>% st_transform(4326), "temp/plots_raw.geojson", delete_dsn=TRUE)
 
-plots_sp <- st_as_sf(plots, coords = c("Easting","Northing"), crs = 32610)
-st_write(plots_sp %>% st_transform(4326), "temp/plots_raw.geojson", delete_dsn=TRUE)
-
-
+## read in corrected plots
+plots = st_read(data("ground_truth/interpreted/plots_manuallyCorrectedComplete.geojson"),stringsAsFactors = FALSE) %>% st_transform(32610)
+plot_coords = st_coordinates(plots)
+plots$Easting = plot_coords[,1]
+plots$Northing = plot_coords[,2]
 
 
 
@@ -48,11 +49,11 @@ trees$duplicated = duplicated( trees %>%  select(Plot,data_col_location,Status,S
 
 
 
-#### Map plot centers ####
+#### Map plot centers -- for manual inspection ####
 
 plot_centers_sp <- st_as_sf(plots, coords = c("Easting","Northing"), crs = 32610)
 
-st_write(plot_centers_sp %>% st_transform(4326),data("ground_truth/field_data/plot_centers.geojson"),delete_dsn=TRUE)
+st_write(plot_centers_sp %>% st_transform(4326),data("ground_truth/processed/plot_centers.geojson"),delete_dsn=TRUE)
 
 
 
@@ -92,20 +93,23 @@ for(i in 1:nrow(plots)) {
       
     } else {
       
-      loc_distance_column_name = paste0("Data_collection_location_",loc,"_distance_from plot center_m")
+      loc_distance_column_name = paste0("Data_collection_location_",loc,"_distance_from.plot.center_m")
       loc_distance_column_number = which(names(plot) == loc_distance_column_name)
       if(is.null(loc_distance_column_number)) {
         cat("No column properly named for distance for plot: ",plot$Plot,", location: ",loc)
       }
       
-      loc_azimuth_column_name = paste0("Data_collection_location_ ",loc,"_Azimuth_from_plot_center(corrected for declination)")
+      loc_azimuth_column_name = paste0("Data_collection_location_.",loc,"_Azimuth_from_plot_center.corrected.for.declination.")
       loc_azimuth_column_number = which(names(plot) == loc_azimuth_column_name)
       if(is.null(loc_azimuth_column_number)) {
         cat("No column properly named for azimuth for plot: ",plot$Plot,", location: ",loc)
       }
       
-      loc_azimuth = plot[,loc_azimuth_column_number]
-      loc_distance = plot[,loc_distance_column_number]
+      plot_nogeo = plot
+      st_geometry(plot_nogeo) = NULL
+      
+      loc_azimuth = plot_nogeo[,loc_azimuth_column_number]
+      loc_distance = plot_nogeo[,loc_distance_column_number] 
       
       loc_x = plot$Easting + sin(deg2rad(loc_azimuth %>% as.numeric())) * loc_distance %>% as.numeric()
       loc_y = plot$Northing + cos(deg2rad(loc_azimuth %>% as.numeric())) * loc_distance %>% as.numeric()
@@ -159,12 +163,12 @@ trees_locs = trees_locs %>%
 
 trees_sp <- st_as_sf(trees_locs, coords = c("Easting","Northing"), crs = 32610)
 
-st_write(trees_sp %>% st_transform(4326),data("ground_truth/field_data/ept_trees_05.geojson"),delete_dsn=TRUE)
+st_write(trees_sp %>% st_transform(4326),data("ground_truth/processed/ept_trees_01.geojson"),delete_dsn=TRUE)
 
 
 ## Plots
 plots_sp <- st_as_sf(plots_locs, coords = c("col_loc_easting","col_loc_northing"), crs = 32610)
 
-st_write(plots_sp %>% st_transform(4326),data("ground_truth/field_data/ept_plots_05.geojson"),delete_dsn=TRUE)
+st_write(plots_sp %>% st_transform(4326),data("ground_truth/processed/ept_plots_01.geojson"),delete_dsn=TRUE)
 
 
