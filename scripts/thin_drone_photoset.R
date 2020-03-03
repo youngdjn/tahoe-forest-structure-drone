@@ -7,13 +7,13 @@ library(here)
 #### Parameters to set for each run (specific to a given photo set) ####
 
 # Top-level folder of all mission images. Do not include trailing slash.
-photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/20_EmPo_120m_90_90_-1ev"
+photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/24_EmPo_90_90_90m_25deg_-1ev"
 
 # Path to save the thinned photoset to. Exclude the actual photoset folder(s) as they will be appended to the path provided here. Do not include trailing slash.
 destination_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions_thinned"
 
 # Name to prepend to all thinned sets based on this photoset
-photoset_name = "set20"
+photoset_name = "set24"
 
 # Specify manual stringer images (images that MapPilot collects along the project boundary when moving from one transect to the next) to exclude if they're not picked up by the algorithm
 # for 15a: manual_stringer_photos = c("2019:09:10 11:12:42","2019:09:10 11:12:44","2019:09:10 11:12:47","2019:09:10 11:12:49","2019:09:10 11:12:52")
@@ -22,6 +22,7 @@ photoset_name = "set20"
 # for 21: manual_stringer_photos = c("2019:09:12 11:01:47", "2019:09:12 11:01:49", "2019:09:12 11:01:51", "2019:09:12 11:01:54")
 # for 22: manual_stringer_photos = NULL
 # for 19: manual_stringer_photos = NULL
+# for 20: manual_stringer_photos = NULL
 
 manual_stringer_photos = NULL
 
@@ -41,10 +42,10 @@ min_photos = 4
 thins = matrix(c(1,1,
                  1,2,
                  2,1,
-                 2,2 #,
-                 #2,4,
-                 #4,2,
-                 #4,4
+                 2,2,
+                 2,4,
+                 4,2,
+                 4,4
                  ),
                ncol=2,
                byrow=TRUE)
