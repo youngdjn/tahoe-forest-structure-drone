@@ -53,7 +53,7 @@ trees$duplicated = duplicated( trees %>%  select(Plot,data_col_location,Status,S
 
 plot_centers_sp <- st_as_sf(plots, coords = c("Easting","Northing"), crs = 32610)
 
-st_write(plot_centers_sp %>% st_transform(4326),data("ground_truth/processed/plot_centers.geojson"),delete_dsn=TRUE)
+st_write(plot_centers_sp %>% st_transform(4326),data("ground_truth/processed/plot_centers_raw.geojson"),delete_dsn=TRUE)
 
 
 
@@ -153,6 +153,13 @@ trees_locs = trees_locs %>%
 trees_locs = left_join(trees_locs,plots_names)
 
 
+#### Add tree ID numbers ####
+
+trees_locs = trees_locs %>%
+  rename(weeks_tree = "Tree ID") %>%
+  mutate(tree_id = 1:nrow(trees_locs))
+
+
 
 #### Convert to spatial and write ####
 
@@ -163,12 +170,12 @@ trees_locs = trees_locs %>%
 
 trees_sp <- st_as_sf(trees_locs, coords = c("Easting","Northing"), crs = 32610)
 
-st_write(trees_sp %>% st_transform(4326),data("ground_truth/processed/ept_trees_01.geojson"),delete_dsn=TRUE)
+st_write(trees_sp %>% st_transform(4326),data("ground_truth/processed/ept_trees_01_uncorrected.geojson"),delete_dsn=TRUE)
 
 
 ## Plots
 plots_sp <- st_as_sf(plots_locs, coords = c("col_loc_easting","col_loc_northing"), crs = 32610)
 
-st_write(plots_sp %>% st_transform(4326),data("ground_truth/processed/ept_plots_01.geojson"),delete_dsn=TRUE)
+st_write(plots_sp %>% st_transform(4326),data("ground_truth/processed/ept_plots_01_uncorrected.geojson"),delete_dsn=TRUE)
 
 
