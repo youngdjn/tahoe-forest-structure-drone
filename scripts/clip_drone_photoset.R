@@ -16,16 +16,25 @@ bounds = st_read("C:/Users/DYoung/Box/projects/tahoe-forest-structure-drone_data
 #### Parameters to set for each run (specific to a given photo set) ####
 
 # Top-level folder of all mission images to be clipped. Do not include trailing slash.
-photoset_path_start = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions_thinned/"
+photoset_path_start = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/"
 
 # Path to save the cilpped photoset to. Exclude the actual photoset folder(s) as they will be appended to the path provided here. Do not include trailing slash.
-destination_path_start = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions_thinned/"
+destination_path_start = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/"
 
 
 
 
-photosets = data.frame(photoset_name = c("set14_120m_95_95_nadir_0ev_thin12","set14_120m_95_95_nadir_0ev_thin21","set14_120m_95_95_nadir_0ev_thin22","set14_120m_95_95_nadir_0ev_thin24","set14_120m_95_95_nadir_0ev_thin42","set14_120m_95_95_nadir_0ev_thin44"),
-                       destination = c("set14b_thin12","set14b_thin21","set14b_thin22","set14b_thin24","set14b_thin42","set14b_thin44"))
+photosets = data.frame(photoset_name = c("set20_thin11","set20_thin12","set20_thin21","set20_thin22","set20_thin24","set20_thin42","set20_thin44"),
+                       destination = c("set20b_thin11","set20b_thin12","set20b_thin21","set20b_thin22","set20b_thin24","set20b_thin42","set20b_thin44"))
+
+
+photosets = data.frame(photoset_name = c("set20_thin11","set20_thin12","set20_thin21","set20_thin22"),
+                       destination = c("set20b_thin11","set20b_thin12","set20b_thin21","set20b_thin22"))
+
+photosets = data.frame(photoset_name = c("14_EmPo_120m_95_95","15a_EmPo_90m_95_95","20_EmPo_120m_90_90_-1ev"),
+                       destination = c("14b_EmPo_120m_95_95","15b_EmPo_90m_95_95","20b_EmPo_120m_90_90_-1ev"))
+
+
 
 
 photosets = photosets %>%
@@ -36,7 +45,7 @@ photosets = photosets %>%
 for(i in 1:nrow(photosets)) {
 
   photoset_path = photosets[i,"photoset_name"]
-  destionation_path = photosets[i,"destination"]
+  destination_path = photosets[i,"destination"]
   
   
   
