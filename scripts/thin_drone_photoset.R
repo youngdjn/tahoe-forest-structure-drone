@@ -7,13 +7,16 @@ library(here)
 #### Parameters to set for each run (specific to a given photo set) ####
 
 # Top-level folder of all mission images. Do not include trailing slash.
-photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/24_EmPo_90_90_90m_25deg_-1ev"
+photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/17_EmPo_120m_90_90_25deg_EW"
 
 # Path to save the thinned photoset to. Exclude the actual photoset folder(s) as they will be appended to the path provided here. Do not include trailing slash.
-destination_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions_thinned"
+destination_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions_thinned_test"
 
 # Name to prepend to all thinned sets based on this photoset
-photoset_name = "set24"
+photoset_name = "set17b"
+
+## Should transects be thinned in pairs? Use for angled-gimbal photosets.
+transect_pairs = TRUE
 
 # Specify manual stringer images (images that MapPilot collects along the project boundary when moving from one transect to the next) to exclude if they're not picked up by the algorithm
 # for 15a: manual_stringer_photos = c("2019:09:10 11:12:42","2019:09:10 11:12:44","2019:09:10 11:12:47","2019:09:10 11:12:49","2019:09:10 11:12:52")
@@ -247,6 +250,10 @@ d_coords = d_coords %>%
 #### !!!! here need to loop through each d_coord.
 # whenver hit a new transect_id, increment the count. assign the count as sorted_transect_id
 
+## to use for assigning paired transects the same ID for purposes of thinning angled gimbal datasets
+transect_id_lookup = rep(1:1000,each=2)
+
+
 transect_ids_encountered = NULL
 
 for(i in 1:nrow(d_coords)) {
@@ -260,7 +267,11 @@ for(i in 1:nrow(d_coords)) {
     transect_ids_encountered = c(transect_ids_encountered,transect_id)
   }
   
-  d_coords[i,"transect_id_new"] = length(transect_ids_encountered)
+  if(!transect_pairs) {
+    d_coords[i,"transect_id_new"] = length(transect_ids_encountered)
+  } else {
+    d_coords[i,"transect_id_new"] = transect_id_lookup[length(transect_ids_encountered)]
+  }
   
 }
 
