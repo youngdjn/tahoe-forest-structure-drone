@@ -7,13 +7,13 @@ library(here)
 #### Parameters to set for each run (specific to a given photo set) ####
 
 # Top-level folder of all mission images. Do not include trailing slash.
-photoset_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions/17_EmPo_120m_90_90_25deg_EW"
+photoset_path = "/storage/temp/27_EmPo_90_90_90m_25deg_-03ev_merged"
 
 # Path to save the thinned photoset to. Exclude the actual photoset folder(s) as they will be appended to the path provided here. Do not include trailing slash.
-destination_path = "C:/Users/DYoung/Box/projects/uav_data/imagery/missions_thinned_test"
+destination_path = "/storage/temp/thinned"
 
 # Name to prepend to all thinned sets based on this photoset
-photoset_name = "set17b"
+photoset_name = "set27b"
 
 ## Should transects be thinned in pairs? Use for angled-gimbal photosets.
 transect_pairs = TRUE
@@ -26,8 +26,10 @@ transect_pairs = TRUE
 # for 22: manual_stringer_photos = NULL
 # for 19: manual_stringer_photos = NULL
 # for 20: manual_stringer_photos = NULL
+# for 27:
+manual_stringer_photos = c("2019:09:12 11:03:21","2019:09:12 11:03:22","2019:09:12 11:01:47","2019:09:12 11:01:49","2019:09:12 11:01:51","2019:09:12 11:01:54")
 
-manual_stringer_photos = NULL
+#manual_stringer_photos = NULL
 
 # How many degrees (angle) change in transect path signals a new transect?
 change_thresh = 8
@@ -39,13 +41,17 @@ tolerance = 3
 proportion_matching_threshold = .2
 
 # Min photos per transect to consider it a transect
+# for 27
+min_photos = 6
+
+# for rest
 min_photos = 4
 
 ## Specify thinning factors (forward then side, one row per thinned set)
-thins = matrix(c(1,1,
-                 1,2,
-                 2,1,
-                 2,2,
+thins = matrix(c(#1,1,
+                 #1,2,
+                 #2,1,
+                 #2,2
                  2,4,
                  4,2,
                  4,4
@@ -251,12 +257,14 @@ d_coords = d_coords %>%
 # whenver hit a new transect_id, increment the count. assign the count as sorted_transect_id
 
 ## to use for assigning paired transects the same ID for purposes of thinning angled gimbal datasets
-transect_id_lookup = rep(1:1000,each=2)
 
+transect_id_lookup = rep(1:1000,each=2)
 
 transect_ids_encountered = NULL
 
 for(i in 1:nrow(d_coords)) {
+  
+  #if(i == 82) { browser() }
   
   photo = d_coords[i,]
   if(photo$stringer) next()
@@ -293,13 +301,13 @@ d_tsect_sp = st_as_sf(d_coords,coords=c("X","Y"), crs=3310)
 
 plot(d_tsect_sp)
 
-st_write(d_tsect_sp %>% st_transform(4326), "temp/temp_transect_eval.geojson",delete_dsn=TRUE)
+st_write(d_tsect_sp %>% st_transform(4326), "/storage/temp/temp_transect_eval.geojson",delete_dsn=TRUE)
 
 
 
 #### Generate thinned photoset copies ####
 
-# copy photosets with specified front and side thinning factor combinations (exclude stringers)
+# copy photo  sets with specified front and side thinning factor combinations (exclude stringers)
 # always generate a set with thinning factors of 1 and 1 which exclude stringers
 
 # reverse the thins so we do the small photosets first
