@@ -1,7 +1,7 @@
 #### For each ground plot and subplot, determine number of trees that have been aligned to drone map.
 # Author: Derek Young
 
-data_dir = "/storage/tahoe-stem-map-alignment/"
+data_dir = "~/Documents/tahoe-stem-map-alignment/"
 
 library(tidyverse)
 library(readxl)
@@ -79,8 +79,8 @@ tree_matches = map_dfr(1:nrow(ground_trees_corr), compare_ground_drone)
 #### Compute derived match variables ####
 
 tree_matches = tree_matches %>%
-  mutate(shifted = ground_tree_shift_x > 0.01 | ground_tree_shift_y > 0.01) %>%
-  mutate(aligned = ground_drone_offset_x < 0.1 & ground_drone_offset_y < 0.1)
+  mutate(shifted = abs(ground_tree_shift_x) > 0.01 | abs(ground_tree_shift_y) > 0.01) %>%
+  mutate(aligned = abs(ground_drone_offset_x) < 0.15 & abs(ground_drone_offset_y) < 0.15)
 
 
 #### Summarize shifted trees ####
@@ -123,8 +123,8 @@ tree_shift_summary_plot = tree_shift_summary %>%
 
 #### Write it ####
 
-write.csv(tree_shift_summary,data("alignment_eval/tree_shift_summary.csv"),row.names=FALSE)
-write.csv(tree_shift_summary_plot,data("alignment_eval/tree_shift_summary_plot.csv"),row.names=FALSE)
+write.csv(tree_shift_summary,data("alignment_eval/tree_shift_summary_v2.csv"),row.names=FALSE)
+write.csv(tree_shift_summary_plot,data("alignment_eval/tree_shift_summary_plot_v2.csv"),row.names=FALSE)
 
 
 
