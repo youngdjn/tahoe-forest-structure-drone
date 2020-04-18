@@ -1,7 +1,7 @@
 #### For each ground plot and subplot, determine number of trees that have been aligned to drone map.
 # Author: Derek Young
 
-data_dir = "~/Documents/tahoe-stem-map-alignment/"
+data_dir = "/storage/tahoe-forest-structure-drone_data/"
 
 library(tidyverse)
 library(readxl)
@@ -14,10 +14,10 @@ source(here("scripts/convenience_functions.R"))
 
 #### Load and clean data ####
 
-ground_trees_orig = st_read(data("ground_truth_stem_map/uncorrected_copy/ept_trees_01_uncorrected_copy.geojson")) %>% filter(Height > 5) %>% st_transform(3310)
-ground_trees_corr = st_read(data("ground_truth_stem_map/corrected/ept_trees_01_corrected.geojson")) %>% filter(Height > 5) %>% st_transform(3310)
+ground_trees_orig = st_read(data("ground_truth_stem_map/processed/ept_trees_01_uncorrected.geojson")) %>% filter(Height > 5) %>% st_transform(3310)
+ground_trees_corr = st_read(data("ground_truth_stem_map/manually_shifted/ept_trees_01_corrected.geojson")) %>% filter(Height > 5) %>% st_transform(3310)
 
-drone_trees = st_read(data("drone_stem_map/treetops_vwf001.geojson")) %>% st_transform(3310)
+drone_trees = st_read(data("reference_drone_stem_map/treetops_vwf001.geojson")) %>% st_transform(3310)
 
 ## clip drone trees to a buffer around ground trees
 
@@ -101,6 +101,11 @@ all_subplots = tree_matches %>%
   group_by(ground_tree_plot,ground_tree_loc) %>%
   summarize(n_trees_total = n())
 
+all_plots = tree_matches %>%
+  select(ground_tree_plot) %>%
+  group_by(ground_tree_plot) %>%
+  summarize(n_trees_total = n())
+
 tree_shift_summary = full_join(trees_shifted, all_subplots) %>%
   mutate(n_trees_shifted = ifelse(is.na(n_trees_shifted),0,n_trees_shifted)) %>%
   mutate(percent_trees_shifted = n_trees_shifted/n_trees_total * 100)
@@ -112,19 +117,49 @@ tree_shift_summary = tree_shift_summary %>%
   select(ground_tree_plot,ground_tree_loc,n_trees_shifted,n_trees_total,percent_trees_shifted,everything())
 
 
-#### Summarize by plot (not also subplot) ####
+#### Summarize shift counts by plot (not also subplot) ####
 
-tree_shift_summary_plot = tree_shift_summary %>%
+tree_shift_count_summary_plot = tree_shift_summary %>%
   group_by(ground_tree_plot) %>%
   summarize(n_trees_shifted = sum(n_trees_shifted),
             n_trees_total = sum(n_trees_total)) %>%
   mutate(percent_trees_shifted = n_trees_shifted/n_trees_total)
 
 
+#### Check how well different collection loc shifts match by plot
+
+tree_shift_col_locs = tree_shift_summary %>%
+  group_by(ground_tree_plot) %>%
+  summarize(x_shift_var = sd(mean_x_shift),
+         y_shift_var = sd(mean_y_shift))
+
+#### Extract plot-level tree shift direction average; combine with subplot-level; use subplot-level shift if n trees shifted > 3, otherwise use plot level
+tree_shift_dir_summary_plot = tree_matches %>%
+  filter(shifted) %>%
+  group_by(ground_tree_plot) %>%
+  summarize(n_trees_shifted = n(),
+            mean_x_shift_plot = mean(ground_tree_shift_x),
+            mean_y_shift_plot = mean(ground_tree_shift_y))
+
+tree_shift_dir_summary_plot = full_join(tree_shift_dir_summary_plot, all_plots) %>%
+  mutate(n_trees_shifted = ifelse(is.na(n_trees_shifted),0,n_trees_shifted))
+
+tree_shift_dir_summary_subplot = tree_shift_summary %>%
+  select(ground_tree_plot, ground_tree_loc, n_trees_shifted_subplot = n_trees_shifted, mean_x_shift_subplot = mean_x_shift, mean_y_shift_subplot = mean_y_shift)
+
+tree_shift_dir_summary = full_join(tree_shift_dir_summary_plot,tree_shift_dir_summary_subplot)
+
+## rules for what shift to use
+tree_shift_dir_summary = tree_shift_dir_summary %>%
+  mutate(derived_shift_x = ifelse(n_trees_shifted_subplot > 2, mean_x_shift_subplot, mean_x_shift_plot),
+         derived_shift_y = ifelse(n_trees_shifted_subplot > 2, mean_y_shift_subplot, mean_y_shift_plot))
+
+
 #### Write it ####
 
-write.csv(tree_shift_summary,data("alignment_eval/tree_shift_summary_v2.csv"),row.names=FALSE)
-write.csv(tree_shift_summary_plot,data("alignment_eval/tree_shift_summary_plot_v2.csv"),row.names=FALSE)
+write.csv(tree_shift_summary,data("reference_alignment_eval/tree_shift_summary.csv"),row.names=FALSE)
+write.csv(tree_shift_count_summary_plot,data("reference_alignment_eval/tree_shift_count_summary_plot.csv"),row.names=FALSE)
+write.csv(tree_shift_dir_summary,data("reference_alignment_eval/tree_shift_dir_summary.csv"),row.names=FALSE)
 
 
 
