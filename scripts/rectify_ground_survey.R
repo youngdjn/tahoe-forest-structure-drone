@@ -1,4 +1,4 @@
-## Use the shift amounts and directions learned from the manual ground stem map alignment to shift all trees in ground map
+## Use the shift amounts and directions learned from the manual ground stem map alignment (check_reference_stem_map_alignment.R) to shift all trees in ground map
 
 data_dir = "/storage/tahoe-forest-structure-drone_data/"
 
