@@ -180,20 +180,8 @@ lines_df = do.call("rbind",lines)
 lines_df = lines_df %>%
   select(ground_tree_id,drone_tree_id)
 
-st_write(lines_df %>% st_transform(4326),data("dev/pairings.geojson"))
-
-
-
-  point_pairs = st_union(matched_ground_trees, matched_drone_trees)
-
-
-
-
-
-
-
-line = st_cast(st_union(point1,point2),"LINESTRING")
-
+st_write(lines_df %>% st_transform(4326),data("dev/pairings.geojson"), delete_dsn = TRUE)
+  
 
 
 
