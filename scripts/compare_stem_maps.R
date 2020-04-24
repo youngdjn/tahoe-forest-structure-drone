@@ -27,16 +27,9 @@ search_height = 10
 
 
 
-#### Data to test with ####
+#### Drone data to test with ####
 
 drone_map = st_read(data("reference_drone_stem_map/treetops_vwf001.geojson")) %>% st_transform(3310)
-
-# assign tree IDs
-drone_map$drone_tree_id = 1:nrow(drone_map)
-
-# Clip to extent of ground map (buffered by search radius)
-ground_map_footprint = ground_map %>% st_union %>% st_buffer(search_distance)
-drone_map_clip = st_intersection(drone_map,ground_map_footprint)
 
 
 
@@ -45,7 +38,7 @@ drone_map_clip = st_intersection(drone_map,ground_map_footprint)
 
 ## For each ground-truth tree, get the closest drone tree within 5 m distance and 2 m height
 
-get_closest_tree = function(ground_tree_index, ground_map, drone_map_clip) {
+get_closest_tree = function(ground_tree_index, ground_map, drone_map) {
   
   ground_tree = ground_map[ground_tree_index,]
   ground_tree$drone_map_match_id = NA
@@ -55,7 +48,7 @@ get_closest_tree = function(ground_tree_index, ground_map, drone_map_clip) {
   if(!is.na(ground_tree$final_drone_map_match_id)) return(ground_tree)
   
   # thin drone map to trees within size bounds
-  drone_map_candidates = drone_map_clip %>%
+  drone_map_candidates = drone_map %>%
     filter(height %>% between(ground_tree$Height-search_height,ground_tree$Height+search_height))
   
   if(nrow(drone_map_candidates) == 0) return(ground_tree)
@@ -82,17 +75,17 @@ get_closest_tree = function(ground_tree_index, ground_map, drone_map_clip) {
 
 ## apply to all ground trees
 
-get_closest_matches = function(ground_map, drone_map_clip, drone_trees_exclude) {
+get_closest_matches = function(ground_map, drone_map, drone_trees_exclude) {
 
   # ground_map = ground_map %>%
   #   mutate(drone_map_match_id = NA,
   #          drone_map_match_distance = NA) %>%
   #   select(-geometry,geometry) # get the geometry column to the end
   
-  drone_map_clip_dropexclude = drone_map_clip %>%
+  drone_map_dropexclude = drone_map %>%
     filter(!(drone_tree_id %in% drone_trees_exclude))
   
-  a = map(1:nrow(ground_map) , get_closest_tree, ground_map = ground_map, drone_map_clip = drone_map_clip_dropexclude)
+  a = map(1:nrow(ground_map) , get_closest_tree, ground_map = ground_map, drone_map = drone_map_dropexclude)
 
   ground_map = do.call(rbind,a)
 
@@ -133,16 +126,221 @@ remove_overmatched_drone_trees = function(ground_map) {
 }
 
 
+## run the matching
 
-ground_map = get_closest_matches(ground_map, drone_map_clip = drone_map_clip, drone_trees_exclude = NULL)
-ground_map = remove_overmatched_drone_trees(ground_map)
+compare_tree_maps = function(ground_map, drone_map) {
+  
+  ground_map = get_closest_matches(ground_map, drone_map = drone_map, drone_trees_exclude = NULL)
+  ground_map = remove_overmatched_drone_trees(ground_map)
+  
+  # get the matches that are off-limits (already matched)
+  drone_trees_matched = unique(ground_map$final_drone_map_match_id)
+  ground_map = get_closest_matches(ground_map, drone_map = drone_map, drone_trees_exclude = drone_trees_matched)
+  ground_map = remove_overmatched_drone_trees(ground_map)
+  
+  ###!!! might not need this additional loop
+  
+  # get the matches that are off-limits (already matched)
+  drone_trees_matched = unique(ground_map$final_drone_map_match_id)
+  ground_map = get_closest_matches(ground_map, drone_map = drone_map, drone_trees_exclude = drone_trees_matched)
+  ground_map = remove_overmatched_drone_trees(ground_map)
+  
+  return(ground_map)
 
-# get the matches that are off-limits (already matched)
-drone_trees_matched = unique(ground_map$final_drone_map_match_id)
-ground_map = get_closest_matches(ground_map, drone_map_clip = drone_map_clip, drone_trees_exclude = drone_trees_matched)
-ground_map = remove_overmatched_drone_trees(ground_map)  
-sum(!is.na(ground_map$final_drone_map_match_id))
+}
 
+
+
+#### Prep data ####
+
+prep_data = function(ground_map, drone_map) {
+  
+  # assign tree IDs
+  drone_map$drone_tree_id = 1:nrow(drone_map)
+  
+  # Clip to extent of ground map (buffered by search radius)
+  ground_map_footprint = ground_map %>% st_union %>% st_convex_hull
+  drone_map = st_intersection(drone_map,ground_map_footprint %>% st_buffer(search_distance) )
+  
+  # Need a label to know if drone map trees were part of a buffered-in polygon
+  ground_map_footprint_bufferin = ground_map_footprint %>% st_buffer(-search_distance)
+  drone_map$internal_area = st_intersects(drone_map,ground_map_footprint_bufferin, sparse=FALSE)
+  
+  ## Tag for ground trees to know if they are under another ground tree
+  # For each tree, are any of the trees within 3 m taller?
+  
+  ## distances between all trees
+  ground_trees_buffer = st_buffer(ground_map, 2)
+  tree_neighbors = st_intersects(ground_trees_buffer,ground_map)
+  
+  ## are any of the tree indexes in the list taller than the focal?
+  any_taller = function(i, tree_neighbors, ground_map) {
+    
+    focal_height = ground_map[i,]$Height
+    other_trees = tree_neighbors[[i]] %>% setdiff(i)
+    neighbors_max_height = ground_map[other_trees,]$Height %>% max
+    neighbor_taller = neighbors_max_height > focal_height
+    
+    return(neighbor_taller)
+    
+  }
+  
+  ground_map$under_neighbor = map_lgl(1:nrow(ground_map), any_taller, tree_neighbors = tree_neighbors, ground_map = ground_map)
+
+  return(list(ground_map = ground_map, drone_map = drone_map))
+}
+
+
+
+#### Compute correspondence statistics ####
+
+## which ground trees are matched to a drone tree?
+# ground_map$final_drone_map_match_id
+
+## which drone trees are matched to a ground tree?
+# get which ground tree they're matched to
+calc_match_stats = function(ground_map, drone_map) {
+  
+  ground_map_simple = ground_map %>%
+    select(ground_tree_id, final_drone_map_match_id, ground_tree_height = Height)
+  drone_map_simple = drone_map %>%
+    select(drone_tree_id, drone_tree_height = height, drone_tree_internal_area = internal_area)
+  st_geometry(ground_map_simple) = NULL
+  st_geometry(drone_map_simple) = NULL
+  drone_ground_match = left_join(drone_map_simple, ground_map_simple, by = c("drone_tree_id"="final_drone_map_match_id"))
+  ground_drone_match = right_join(drone_map_simple, ground_map_simple, by = c("drone_tree_id"="final_drone_map_match_id"))
+  
+  ## Counts of ground trees trees matched to drone trees, by size classes
+  ground_drone_match = ground_drone_match %>%
+    mutate(height_cat = cut(ground_tree_height,breaks = c(-Inf,5,10,20,30,40,Inf), labels = c("0-5","5-10","10-20","20-30","30-40","40+")))
+  
+  drone_ground_match = drone_ground_match %>%
+    filter(drone_tree_internal_area == TRUE) %>% # make sure it's internal to the buffer of ground trees
+    mutate(height_cat = cut(drone_tree_height,breaks = c(-Inf,5,10,20,30,40,Inf), labels = c("0-5","5-10","10-20","20-30","30-40","40+")))
+  
+  ground_drone_match_stats = ground_drone_match %>%
+    group_by(height_cat) %>%
+    summarize(n_ground_matched_drone = sum(!is.na(drone_tree_id) & !is.na(ground_tree_id)),
+              n_ground = n())
+    
+  drone_ground_match_stats = drone_ground_match %>%
+    group_by(height_cat) %>%
+    summarize(n_drone_matched_ground = sum(!is.na(drone_tree_id) & !is.na(ground_tree_id)),
+              n_drone = n())
+  
+  match_stats = full_join(ground_drone_match_stats, drone_ground_match_stats, by = "height_cat")
+  
+  over10_match = match_stats %>%
+    filter(height_cat != "5-10") %>%
+    summarize_at(vars(-height_cat),sum) %>%
+    mutate(height_cat = "10+")
+  
+  over20_match = match_stats %>%
+    filter(height_cat != "5-10" & height_cat != "10-20") %>%
+    summarize_at(vars(-height_cat),sum) %>%
+    mutate(height_cat = "20+")
+  
+  over30_match = match_stats %>%
+    filter(height_cat != "5-10" & height_cat != "10-20" & height_cat != "20-30") %>%
+    summarize_at(vars(-height_cat),sum) %>%
+    mutate(height_cat = "30+")
+  
+  match_stats = bind_rows(match_stats,over10_match,over20_match,over30_match)
+  
+  match_stats = match_stats %>%
+    mutate(sensitivity = n_ground_matched_drone/n_ground,
+           precision = n_drone_matched_ground/n_drone)
+
+  return(match_stats)
+}
+
+
+
+
+
+prepped_ground = data_prepped$ground_map
+prepped_drone = data_prepped$drone_map
+
+ground_hull = prepped_ground %>% st_union %>% st_convex_hull %>% st_buffer(-25)
+
+grid = st_make_grid(ground_hull, cellsize=25)
+grid_inside = st_contains(ground_hull,grid, sparse=FALSE)
+grid_full = grid[grid_inside[1,]]
+grid_full = st_sf(grid_full)
+grid_full$grid_id = 1:nrow(grid_full)
+prepped_ground = st_intersection(prepped_ground,grid_full)
+prepped_drone = st_intersection(prepped_drone,grid_full)
+
+ground_map_simple = prepped_ground %>%
+  select(ground_tree_id, final_drone_map_match_id, height = Height, grid_id)
+drone_map_simple = prepped_drone %>%
+  select(drone_tree_id, height = height, drone_tree_internal_area = internal_area, grid_id)
+st_geometry(ground_map_simple) = NULL
+st_geometry(drone_map_simple) = NULL
+drone_ground_match = bind_rows(drone_map_simple, ground_map_simple)
+##!! note this does not actually join, just rbinds, because the trees have not been matched yet, but that's ok
+
+### within each grid cell, compute number of trees by each size class
+
+drone_ground_match_over10 = drone_ground_match %>%
+  filter(height > 10) %>%
+  mutate(height_cat = "10+")
+  
+drone_ground_match_over20 = drone_ground_match %>%
+  filter(height > 20) %>%
+  mutate(height_cat = "20+")
+
+drone_ground_match_over30 = drone_ground_match %>%
+  filter(height > 30) %>%
+  mutate(height_cat = "30+")
+
+drone_ground_match_over40 = drone_ground_match %>%
+  filter(height > 40) %>%
+  mutate(height_cat = "40+")
+
+drone_ground_match = bind_rows(drone_ground_match_over10,
+                               drone_ground_match_over20,
+                               drone_ground_match_over30,
+                               drone_ground_match_over40)
+
+
+density_by_cell = drone_ground_match %>%
+  group_by(grid_id, height_cat) %>%
+  summarize(density_ground = sum(!is.na(ground_tree_id)),
+            density_drone = sum(!is.na(drone_tree_id))) %>%
+  mutate(error_abs = density_drone-density_ground,
+         error_pct =(density_drone-density_ground)/density_ground )
+
+density_summary = density_by_cell %>%
+  group_by(height_cat) %>%
+  summarize(mean_abs_err = mean(abs(error_abs)),
+            mean_bias = mean(error_abs),
+            mean_ground_trees = mean(density_ground),
+            mean_drone_trees = mean(density_drone),
+            correlation = cor(density_ground,density_drone)) %>%
+  mutate(mean_abs_err_pct = mean_abs_err/mean_ground_trees)
+  
+
+
+
+
+
+
+
+
+
+
+
+data_prepped = prep_data(ground_map, drone_map)
+ground_map_compared = compare_tree_maps(data_prepped$ground_map, data_prepped$drone_map)
+match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
+match_stats_alltrees$tree_position = "all"
+
+match_stats_singletrees = calc_match_stats(ground_map_compared %>% filter(under_neighbor == FALSE),data_prepped$drone_map)
+match_stats_singletrees$tree_position = "single"
+
+match_stats = bind_rows(match_stats_alltrees,
+                        match_stats_singletrees)
 
 
 
