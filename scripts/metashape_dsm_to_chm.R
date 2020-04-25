@@ -45,6 +45,6 @@ dem_interp = resample(dem %>% projectRaster(crs=crs(dsm)),dsm)
 chm = dsm - dem_interp
 
 # create dir if doesn't exist, then write
-dir = data("post_metashape_products/")
+dir = data("post_metashape_products/chm/")
 dir.create(dir)
-writeRaster(chm,paste0(dir,paramset_name,".tif")) # naming it metashape because it's just based on metashape dsm (and usgs dtm) -- to distinguish from one generated from point cloud
+writeRaster(chm,paste0(dir,"chm-",paramset_name,".tif")) # naming it metashape because it's just based on metashape dsm (and usgs dtm) -- to distinguish from one generated from point cloud
