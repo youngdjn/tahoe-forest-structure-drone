@@ -1,10 +1,10 @@
 ## Takes a USGS DEM (DTM) and a Metashape DSM and calculates a CHM
 
 # The root of the data directory
-data_dir = "C:/Users/DYoung/Box/projects/tahoe-forest-structure-drone_data/"
+data_dir = "~/Documents/data/tahoe-forest-structure-drone_data/"
 
 # Name of specific Metashape project for which to process Metashape products
-project_dir = "paramset001/"
+paramset_name = "paramset14_01"
 
 library(sf)
 library(raster)
@@ -17,12 +17,11 @@ source(here("scripts/convenience_functions.R"))
 
 #### Load data ####
 
-roi = st_read(data("study_area_perimeter/emerald_point_roi.geojson"))
+roi = st_read(data("study_area_perimeter/ground_map_mask.geojson")) %>% st_transform(26910)
 dem = raster(data("dem_usgs/dem_usgs.tif"))
 
 # find the dsm file in the metashape_products direcotry
-dir = data(  paste0("metashape_products/",project_dir ))
-dsm_file = list.files(dir,pattern="dsm_coarse.tif", full.names=TRUE)
+dsm_file = list.files(data("metashape_products"),pattern=paramset_name, full.names=TRUE)
 if(length(dsm_file) > 1) stop("More than 1 DSM file in the specified metashape data products folder.")
 if(length(dsm_file) == 0) stop("No DSM files int he specified metashape data products folder.")
 
@@ -46,6 +45,6 @@ dem_interp = resample(dem %>% projectRaster(crs=crs(dsm)),dsm)
 chm = dsm - dem_interp
 
 # create dir if doesn't exist, then write
-dir = data(paste0("post_metashape_products/",project_dir))
+dir = data("post_metashape_products/")
 dir.create(dir)
-writeRaster(chm,paste0(dir,"chm_metashape.tif")) # naming it metashape because it's just based on metashape dsm (and usgs dtm) -- to distinguish from one generated from point cloud
+writeRaster(chm,paste0(dir,paramset_name,".tif")) # naming it metashape because it's just based on metashape dsm (and usgs dtm) -- to distinguish from one generated from point cloud
