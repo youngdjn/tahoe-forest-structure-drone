@@ -10,7 +10,9 @@ library(sf)
 library(raster)
 library(ForestTools)
 library(here)
+library(purrr)
 library(furrr)
+library(tidyverse)
 
 #### Convenience functions ####
 
@@ -30,8 +32,17 @@ if(length(chm_file) > 1) stop("More than 1 matching CHM file in the specified me
 if(length(chm_file) == 0) stop("No matching CHM files int he specified metashape data products folder.")
 
 chm = raster(chm_file)
-weights = matrix(1,nrow=9,ncol=9)
-chm_smooth = focal(chm, weights, fun=mean)
+
+# create two smoothed rasters: 1 m window width and 0.5 m window width
+chm_res = res(chm) %>% mean
+pixels_smooth_1 = round(((0.5/chm_res)-1)/2)*2 + 1 # round to nearest odd integer
+pixels_smooth_2 = round(((1/chm_res)-1)/2)*2 + 1
+
+weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
+chm_smooth_1 = focal(chm, weights, fun=mean)
+
+weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
+chm_smooth_2 = focal(chm, weights, fun=mean)
 
 
 #### Identify treetops ####
@@ -41,23 +52,32 @@ chm_smooth = focal(chm, weights, fun=mean)
 
 a = seq(0.02, 0.10, by=0.02)
 b = seq(0.2, 1, by = 0.2)
-smooth = c(TRUE,FALSE)
+smooth = c(0,1,2)
 
 params = expand.grid(a=a,b=b,smooth=smooth)
 
 params$vwf_name = str_pad(1:nrow(params), width=3, pad = "0")
 
-vwf_singlechm_singleparamset = function(chm, chm_smooth, layer_name, a, b, smooth, vwf_name) {
+
+# ### dev
+# a = params_foc$a
+# b = params_foc$b
+# smooth = params_foc$smooth
+
+
+vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, layer_name, a, b, smooth, vwf_name) {
   
   
-  if(smooth) {
-    chm = chm_smooth
+  if(smooth == 1) {
+    chm = chm_smooth_1
+  } else if(smooth == 2) {
+    chm = chm_smooth_2
   }
   ## Previously for vwf001
   # a = 0.05
   # b = 0.4
   lin <- function(x){x * a + b} # window filter function to use in next step
-  treetops <- vwf(CHM = chm, winFun = lin, minHeight = 5)
+  treetops <- vwf(CHM = chm, winFun = lin, minHeight = 5, maxWinDiameter = 199)
   treetops = as(treetops,"sf") %>% st_transform(4326)
   
   ## Save treetops
@@ -74,8 +94,12 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth, layer_name, a, b, smoot
 
 
 plan(multiprocess)
-a = future_pmap(params, vwf_singlechm_singleparamset , chm=chm, chm_smooth = chm_smooth, layer_name = paramset_name)
+a = future_pmap(params, vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, layer_name = paramset_name)
 
 
+
+# ## error with either 14 or 39: fixed by installing from github
+# Error in .local(x, ...) : w must have uneven sides
+# In addition: There were 13 warnings (use warnings() to see them)
 
 #7,32
