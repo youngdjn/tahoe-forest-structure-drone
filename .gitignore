@@ -42,4 +42,4 @@ vignettes/*.pdf
 /temp/
 
 # File specifying data directory
-/data_dir.txt
+data_dir.txt
