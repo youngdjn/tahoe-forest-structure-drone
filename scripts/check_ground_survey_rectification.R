@@ -1,12 +1,15 @@
 #### For each ground plot and subplot, determine number of trees that have been aligned to drone map.
 # Author: Derek Young
 
-data_dir = "/storage/tahoe-forest-structure-drone_data/"
 
 library(tidyverse)
 library(readxl)
 library(sf)
 library(here)
+
+#### Get data dir ####
+# The root of the data directory
+data_dir = readLines(here("data_dir.txt"), n=1)
 
 #### Conveinence functions ####
 

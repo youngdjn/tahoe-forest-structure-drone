@@ -1,12 +1,14 @@
 #### Convert Weeks' Emerald Point ground-truth survey data into GeoJSON
 # Author: Derek Young
 
-data_dir = "C:/Users/DYoung/Box/projects/tahoe-forest-structure-drone_data/"
-
 library(tidyverse)
 library(readxl)
 library(sf)
 library(here)
+
+#### Get data dir ####
+# The root of the data directory
+data_dir = readLines(here("data_dir.txt"), n=1)
 
 #### Conveinence functions ####
 

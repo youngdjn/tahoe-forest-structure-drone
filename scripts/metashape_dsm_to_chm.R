@@ -1,14 +1,15 @@
 ## Takes a USGS DEM (DTM) and a Metashape DSM and calculates a CHM
 
-# The root of the data directory
-data_dir = "~/Documents/data/tahoe-forest-structure-drone_data/"
-
 # Name of specific Metashape project for which to process Metashape products
 paramset_name = "paramset15a_02"
 
 library(sf)
 library(raster)
 library(here)
+
+#### Get data dir ####
+# The root of the data directory
+data_dir = readLines(here("data_dir.txt"), n=1)
 
 #### Convenience functions ####
 

@@ -1,13 +1,15 @@
 ## Compile all the individual ground-drone map comparison stats files
 
-data_dir = "~/Documents/data/tahoe-forest-structure-drone_data/"
-
 library(tidyverse)
 library(here)
 library(viridis)
 
 
 source(here("scripts/convenience_functions.R"))
+
+#### Get data dir ####
+# The root of the data directory
+data_dir = readLines(here("data_dir.txt"), n=1)
 
 
 ## Load the config definitions
@@ -57,7 +59,7 @@ ggplot(vwf_dat, aes(x = a, y = b, fill = f_score)) +
 
 ### Make a list of the best paramsets
 
-
+## For each combo of tree position & height, get the parameter set that maximizes f_score and correlation
 
 
 

@@ -40,3 +40,6 @@ vignettes/*.pdf
 
 # Temporary output folder
 /temp/
+
+# File specifying data directory
+/data_dir.txt

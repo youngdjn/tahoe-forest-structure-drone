@@ -1,12 +1,13 @@
 ## Function to compare a drone map with a ground map and, ultimately, compare all drone maps in the directory with the ground map
 
-
-data_dir = "~/Documents/data/tahoe-forest-structure-drone_data/"
-
 library(tidyverse)
 library(sf)
 library(here)
 library(furrr)
+
+#### Get data dir ####
+# The root of the data directory
+data_dir = readLines(here("data_dir.txt"), n=1)
 
 source(here("scripts/convenience_functions.R"))
 source(here("scripts/compare_stem_map_functions.R"))

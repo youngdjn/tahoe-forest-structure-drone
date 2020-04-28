@@ -1,10 +1,12 @@
 ## Use the shift amounts and directions learned from the manual ground stem map alignment (check_reference_stem_map_alignment.R) to shift all trees in ground map
 
-data_dir = "~/Documents/data/tahoe-forest-structure-drone_data/"
-
 library(tidyverse)
 library(sf)
 library(here)
+
+#### Get data dir ####
+# The root of the data directory
+data_dir = readLines(here("data_dir.txt"), n=1)
 
 #### Conveinence functions ####
 
