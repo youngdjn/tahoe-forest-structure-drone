@@ -16,73 +16,37 @@ source(here("scripts/convenience_functions.R"))
 
 ## For each ground-truth tree, get the closest drone tree within 5 m distance and 2 m height
 
-get_closest_tree = function(ground_tree_index, ground_map, drone_map) {
+get_closest_tree = function(ground_tree_index, ground_map, drone_map, dist_mat) {
 
   ground_tree = ground_map[ground_tree_index,]
   ground_tree$drone_map_match_id = NA
   ground_tree$drone_map_match_distance = NA
   
+  drone_map$distance_to_ground_tree = dist_mat[ground_tree_index,] %>% as.numeric
+  
   # if we already matched that ground tree
-  if(!is.na(ground_tree$final_drone_map_match_id)) {
-    st_geometry(ground_tree) = NULL
-    ground_tree = ground_tree %>%
-      select(ground_tree_id, drone_map_match_id, drone_map_match_distance)
-    return(ground_tree)
-  }
+  if(!is.na(ground_tree$final_drone_map_match_id)) return(ground_tree)
   
   # thin drone map to trees within size bounds
   lwr = ground_tree$Height-ground_tree$Height*search_height_proportion
   upr = ground_tree$Height+ground_tree$Height*search_height_proportion
-
-  
-  temp_coords = st_coordinates(drone_map)
-  temp_crs = st_crs(drone_map)
-  st_geometry(drone_map) = NULL
-  drone_map$x = temp_coords[,1]
-  drone_map$y = temp_coords[,2]
   drone_map_candidates = drone_map[between(drone_map$height,lwr,upr),]
-  drone_map_candidates = st_as_sf(drone_map_candidates, coords = c("x","y"))
-  st_crs(drone_map_candidates) = temp_crs
 
-  
-  
-  # drone_map_candidates = drone_map %>%
-  #   filter(between(height, lwr, upr))
-  
-  if(nrow(drone_map_candidates) == 0) {
-    st_geometry(ground_tree) = NULL
-    ground_tree = ground_tree %>%
-      select(ground_tree_id, drone_map_match_id, drone_map_match_distance)
-    return(ground_tree)
-  }
-  
-  # get distance to each
-  drone_map_candidates$distance = st_distance(ground_tree, drone_map_candidates)[1,] %>% as.numeric()
+  if(nrow(drone_map_candidates) == 0) return(ground_tree)
   
   # thin to those within distance
   drone_map_candidates = drone_map_candidates %>%
-    filter(distance < search_distance)
+    filter(distance_to_ground_tree < search_distance)
   
-  if(nrow(drone_map_candidates) == 0) {
-    st_geometry(ground_tree) = NULL
-    ground_tree = ground_tree %>%
-      select(ground_tree_id, drone_map_match_id, drone_map_match_distance)
-    return(ground_tree)
-  }
+  if(nrow(drone_map_candidates) == 0) return(ground_tree)
   
   # take the closest
-  drone_map_match = drone_map_candidates[which(drone_map_candidates$distance == min(drone_map_candidates$distance)),]
+  drone_map_match = drone_map_candidates[which(drone_map_candidates$distance_to_ground_tree == min(drone_map_candidates$distance_to_ground_tree)),]
 
   ground_tree$drone_map_match_id = drone_map_match$drone_tree_id
-  ground_tree$drone_map_match_distance = drone_map_match$distance
-  
-  st_geometry(ground_tree) = NULL
-  
-  ground_tree = ground_tree %>%
-    select(ground_tree_id, drone_map_match_id, drone_map_match_distance)
+  ground_tree$drone_map_match_distance = drone_map_match$distance_to_ground_tree
   
   return(ground_tree)
-  
 }
 
 
@@ -98,8 +62,19 @@ get_closest_matches = function(ground_map, drone_map, drone_trees_exclude) {
   drone_map_dropexclude = drone_map %>%
     filter(!(drone_tree_id %in% drone_trees_exclude))
   
-  a = map_dfr(1:nrow(ground_map) , get_closest_tree, ground_map = ground_map, drone_map = drone_map_dropexclude)
+  dist_mat = st_distance(ground_map, drone_map_dropexclude)
+  
+  ground_map_nonsp = ground_map
+  st_geometry(ground_map_nonsp) = NULL
+  
+  drone_map_nonsp = drone_map_dropexclude
+  st_geometry(drone_map_nonsp) = NULL
+  
+  a = map_dfr(1:nrow(ground_map) , get_closest_tree, ground_map = ground_map_nonsp, drone_map = drone_map_nonsp, dist_mat = dist_mat)
 
+  a = a %>%
+    select(ground_tree_id, drone_map_match_id, drone_map_match_distance)
+  
   ground_map = left_join(ground_map,a, by="ground_tree_id")
 
 }
@@ -381,7 +356,7 @@ make_lines_between_matches = function(ground_map, drone_map, drone_map_name) {
   lines_df = lines_df %>%
     select(ground_tree_id,drone_tree_id)
   
-  st_write(lines_df %>% st_transform(4326),data(paste0("drone_map_evals/stem_map_pairing_lines/pairings_", drone_map_name, ".geojson")), delete_dsn = TRUE)
+  st_write(lines_df %>% st_transform(4326),data(paste0("drone_map_evals/stem_map_pairing_lines/pairings_", drone_map_name, ".geojson")), delete_dsn = TRUE, quiet=TRUE)
   
 }
 
@@ -424,4 +399,27 @@ match_compare_single = function(ground_map, drone_map, drone_map_name) {
 }
 
 
+
+
+match_compare_single_wrapper = function(ground_map, drone_map_file) {
+  
+  drone_map = st_read(drone_map_file, quiet=TRUE) %>% st_transform(3310)
+  
+  #### Filter drone map data to only trees within the height search distance of the smallest size category
+  drone_map = drone_map %>%
+    filter(height >= (smallest_size-smallest_size*search_height_proportion))
+  
+  
+  ## get drone map name from filename
+  parts = str_split(drone_map_file,"/")[[1]]
+  filename = parts[length(parts)]
+  drone_map_name = str_split(filename,"\\.")[[1]][1]
+  
+  
+  ## Run compariston/eval ##
+  match_compare_single(ground_map, drone_map, drone_map_name = drone_map_name)
+  
+  return(TRUE)
+  
+}
 
