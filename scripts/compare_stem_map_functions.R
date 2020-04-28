@@ -262,7 +262,8 @@ calc_match_stats = function(ground_map, drone_map) {
     summarize(height_mae = mean(abs(height_err)),
               height_bias = mean(height_err),
               height_mean_ground = mean(ground_tree_height),
-              height_mean_drone = mean(drone_tree_height)) %>%
+              height_mean_drone = mean(drone_tree_height),
+              height_cor = cor(ground_tree_height,drone_tree_height)) %>%
     mutate(height_cat = "10+")
   
   over20trees = trees_matched %>%
@@ -270,7 +271,8 @@ calc_match_stats = function(ground_map, drone_map) {
     summarize(height_mae = mean(abs(height_err)),
               height_bias = mean(height_err),
               height_mean_ground = mean(ground_tree_height),
-              height_mean_drone = mean(drone_tree_height)) %>%
+              height_mean_drone = mean(drone_tree_height),
+              height_cor = cor(ground_tree_height,drone_tree_height)) %>%
     mutate(height_cat = "20+")
   
   over30trees = trees_matched %>%
@@ -278,7 +280,8 @@ calc_match_stats = function(ground_map, drone_map) {
     summarize(height_mae = mean(abs(height_err)),
               height_bias = mean(height_err),
               height_mean_ground = mean(ground_tree_height),
-              height_mean_drone = mean(drone_tree_height)) %>%
+              height_mean_drone = mean(drone_tree_height),
+              height_cor = cor(ground_tree_height,drone_tree_height)) %>%
     mutate(height_cat = "30+")
   
   over40trees = trees_matched %>%
@@ -286,7 +289,8 @@ calc_match_stats = function(ground_map, drone_map) {
     summarize(height_mae = mean(abs(height_err)),
               height_bias = mean(height_err),
               height_mean_ground = mean(ground_tree_height),
-              height_mean_drone = mean(drone_tree_height)) %>%
+              height_mean_drone = mean(drone_tree_height),
+              height_cor = cor(ground_tree_height,drone_tree_height)) %>%
     mutate(height_cat = "40+")
   
   height_stats = bind_rows(over10trees,over20trees,over30trees,over40trees) %>%

@@ -37,7 +37,7 @@ drone_map_files = list.files(data("post_metashape_products/detected_trees"), pat
 plan(multiprocess)
 
 # Run it. Don't need the returned value. It is a record of whether the drone set was skipped because it had an implausible number of trees.
-comparison_plausible = map(drone_map_files[173], match_compare_single_wrapper, ground_map = ground_map)
+comparison_plausible = future_map(drone_map_files[173], match_compare_single_wrapper, ground_map = ground_map)
 
 
 
