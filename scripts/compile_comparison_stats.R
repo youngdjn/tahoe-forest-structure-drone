@@ -4,12 +4,14 @@ data_dir = "~/Documents/data/tahoe-forest-structure-drone_data/"
 
 library(tidyverse)
 library(here)
+library(viridis)
+
 
 source(here("scripts/convenience_functions.R"))
 
 
 ## Load the config definitions
-config_files = list.files(data("parameter_set_definitions"), pattern="defs_[0-9][0-9][0-9]\\.csv", full.names = TRUE)
+config_files = list.files(data("parameter_set_definitions"), pattern="defs_.*\\.csv", full.names = TRUE)
 
 configs = map_dfr(config_files, read_csv)
 
@@ -27,7 +29,7 @@ stats = map_dfr(stats_files, read_csv)
 stats = stats %>%
   mutate(config_name = str_split(drone_map_name,"-") %>% map_chr(2))
 
-stats = left_join(stats, configs, by = c("config_name"="vwf_name"))
+stats = left_join(stats, configs, by = c("config_name"="detection_params_name"))
 
 
 ### Arrange for inspection
@@ -43,15 +45,18 @@ stats = stats %>%
 
 vwf_dat = stats %>%
   filter(tree_position == "all",
-         height_cat == "30+",
+         height_cat == "20+",
          )
 
-library(viridis)
 
-ggplot(vwf_dat, aes(x = a, y = b, fill = correlation)) +
+ggplot(vwf_dat, aes(x = a, y = b, fill = f_score)) +
   geom_tile() +
-  facet_wrap(smooth) +
+  facet_wrap("smooth") +
   scale_fill_viridis_c()
+
+
+### Make a list of the best paramsets
+
 
 
 
