@@ -1,10 +1,4 @@
-## Takes a USGS DEM (DTM) and a Metashape DSM and identifies treetops
-
-# The root of the data directory
-data_dir = "~/Documents/data/tahoe-forest-structure-drone_data/"
-
-# Name of specific Metashape project for which to process Metashape products
-
+## Takes a CHM and makes a map of treetops
 
 library(sf)
 library(raster)
@@ -14,24 +8,11 @@ library(purrr)
 library(furrr)
 library(tidyverse)
 
-#### Convenience functions ####
-
+## Convenience functions ####
 source(here("scripts/convenience_functions.R"))
 
-#### Specify paramset of interest ####
 
-#### Identify treetops ####
-#### and save to geojson
-
-
-
-
-
-# ### dev
-# a = params_foc$a
-# b = params_foc$b
-# smooth = params_foc$smooth
-
+#### Main function defs ####
 
 vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smooth_3, layer_name, a, b, smooth, detection_params_name) {
 
@@ -99,63 +80,5 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
 
 }
 
-
-
-
-### Define parameter values to search: only need to run if set defs change
-
-# b = seq(0.00, 0.06, by=0.01)
-# a = seq(0.0, 1, by = 0.1)
-# smooth = c(0,1,2,3)
-# 
-# params = expand.grid(a=a,b=b,smooth=smooth)
-# 
-# # remove sets where both a and b are zero
-# params = params %>%
-#   filter(!(a == 0 & b == 0))
-# 
-# params$detection_params_name = paste0("vwf_",str_pad(1:nrow(params), width=3, pad = "0"))
-# 
-# params$method = "vwf"
-# 
-# # save vwf params
-# write_csv(params,data("parameter_set_definitions/vwfdefs_fullrange.csv"))
-
-# load vwf params
-params = read_csv(data("parameter_set_definitions/vwfdefs_fullrange.csv"))
-
-
-### Define parameter values to search (simple version: only need to run if set defs change
-
-b = seq(0.05, 0.05, by=0.02)
-a = seq(0.6, 0.8, by = 0.2)
-smooth = c(0,2)
-
-params = expand.grid(a=a,b=b,smooth=smooth)
-
-# remove sets where both a and b are zero
-params = params %>%
-  filter(!(a == 0 & b == 0))
-
-params$detection_params_name = paste0("vwf_",str_pad(1:nrow(params)+500, width=3, pad = "0"))
-
-params$method = "vwf"
-
-# save vwf params
-write_csv(params,data("parameter_set_definitions/vwfdefs_simp.csv"))
-
-# load vwf params
-params = read_csv(data("parameter_set_definitions/vwfdefs_simp.csv"))
-
-
-
-
-
-# Run for multiple CHMs
-plan(multiprocess)
-
-paramset_names = c("paramset14_01","paramset15a_02")
-
-walk(paramset_names,.f = vwf_singlechm_multiparamset, params = params)
 
 
