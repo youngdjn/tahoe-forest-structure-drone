@@ -20,7 +20,7 @@ source(here("scripts/convenience_functions.R"))
 
 #### Specify paramset of interest ####
 
-paramset_name = "paramset14_01"
+paramset_name = "paramset15a_02"
 
 
 
@@ -110,7 +110,7 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smo
 }
 
 
-plan(multiprocess)
+plan(multiprocess, workers = 6)
 
 a = future_pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, layer_name = paramset_name)
 
