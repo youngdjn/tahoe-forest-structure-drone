@@ -252,10 +252,55 @@ calc_match_stats = function(ground_map, drone_map) {
   
   match_stats = bind_rows(over10_match,over20_match,over30_match,over40_match)
   
+  # get the height difference of the matched trees
+  trees_matched = ground_drone_match %>%
+    filter(!is.na(drone_tree_id)) %>%
+    mutate(height_err = drone_tree_height - ground_tree_height)
+  
+  over10trees = trees_matched %>%
+    filter(ground_tree_height >= 10) %>%
+    summarize(height_mae = mean(abs(height_err)),
+              height_bias = mean(height_err),
+              height_mean_ground = mean(ground_tree_height),
+              height_mean_drone = mean(drone_tree_height)) %>%
+    mutate(height_cat = "10+")
+  
+  over20trees = trees_matched %>%
+    filter(ground_tree_height >= 20) %>%
+    summarize(height_mae = mean(abs(height_err)),
+              height_bias = mean(height_err),
+              height_mean_ground = mean(ground_tree_height),
+              height_mean_drone = mean(drone_tree_height)) %>%
+    mutate(height_cat = "20+")
+  
+  over30trees = trees_matched %>%
+    filter(ground_tree_height >= 30) %>%
+    summarize(height_mae = mean(abs(height_err)),
+              height_bias = mean(height_err),
+              height_mean_ground = mean(ground_tree_height),
+              height_mean_drone = mean(drone_tree_height)) %>%
+    mutate(height_cat = "30+")
+  
+  over40trees = trees_matched %>%
+    filter(ground_tree_height >= 40) %>%
+    summarize(height_mae = mean(abs(height_err)),
+              height_bias = mean(height_err),
+              height_mean_ground = mean(ground_tree_height),
+              height_mean_drone = mean(drone_tree_height)) %>%
+    mutate(height_cat = "40+")
+  
+  height_stats = bind_rows(over10trees,over20trees,over30trees,over40trees) %>%
+    mutate(height_mae_percent = height_mae / height_mean_ground)
+  
+  
+  
+  
   match_stats = match_stats %>%
     mutate(sensitivity = n_ground_matched_drone/n_ground,
            precision = n_drone_matched_ground/n_drone) %>%
     mutate(f_score = 2*sensitivity*precision/(sensitivity+precision))
+  
+  match_stats = full_join(match_stats,height_stats, by = "height_cat")
 
   return(match_stats)
 }
