@@ -402,12 +402,20 @@ match_compare_single = function(ground_map, drone_map, drone_map_name) {
 
 
 match_compare_single_wrapper = function(ground_map, drone_map_file) {
-  
+
   drone_map = st_read(drone_map_file, quiet=TRUE) %>% st_transform(3310)
   
+
   #### Filter drone map data to only trees within the height search distance of the smallest size category
   drone_map = drone_map %>%
     filter(height >= (smallest_size-smallest_size*search_height_proportion))
+  
+  ### If the drone map has > 3x as many trees as the ground map, or < 1/2, skip it
+  n_drone_trees = nrow(drone_map)
+  n_ground_trees = nrow(ground_map)
+  if((n_drone_trees > 3*n_ground_trees) | (n_drone_trees < 0.5*n_ground_trees)) {
+    return(FALSE)
+  }
   
   
   ## get drone map name from filename

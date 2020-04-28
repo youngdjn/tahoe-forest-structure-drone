@@ -20,7 +20,7 @@ ground_map$final_drone_map_match_id = NA
 
 #### Constants ####
 search_distance = 4
-search_height_proportion = .2
+search_height_proportion = .25
 smallest_size = 10 # smallest tree size to include in a size class for comparison
 
 #### Filter ground map data to only trees within the height search distance of the smallest size category (here hard-coded as 10 m)
@@ -35,7 +35,9 @@ drone_map_files = list.files(data("post_metashape_products/detected_trees"), pat
 
 
 plan(multiprocess)
-trash = future_map(drone_map_files, match_compare_single_wrapper, ground_map = ground_map)
+
+# Run it. Don't need the returned value. It is a record of whether the drone set was skipped because it had an implausible number of trees.
+comparison_plausible = future_map(drone_map_files, match_compare_single_wrapper, ground_map = ground_map)
 
 
 

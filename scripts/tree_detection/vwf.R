@@ -37,6 +37,7 @@ chm = raster(chm_file)
 chm_res = res(chm) %>% mean
 pixels_smooth_1 = round(((0.5/chm_res)-1)/2)*2 + 1 # round to nearest odd integer
 pixels_smooth_2 = round(((1/chm_res)-1)/2)*2 + 1
+pixels_smooth_3 = round(((1.5/chm_res)-1)/2)*2 + 1
 
 weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
 chm_smooth_1 = focal(chm, weights, fun=mean)
@@ -44,19 +45,34 @@ chm_smooth_1 = focal(chm, weights, fun=mean)
 weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
 chm_smooth_2 = focal(chm, weights, fun=mean)
 
+weights = matrix(1,nrow=pixels_smooth_3,ncol=pixels_smooth_3)
+chm_smooth_3 = focal(chm, weights, fun=mean)
 
 #### Identify treetops ####
 #### and save to geojson
 
-### Define parameter values to search
+### Define parameter values to search: only need to run if set defs change
 
-a = seq(0.02, 0.10, by=0.02)
-b = seq(0.2, 1, by = 0.2)
-smooth = c(0,1,2)
+# b = seq(0.00, 0.06, by=0.01)
+# a = seq(0.0, 1, by = 0.1)
+# smooth = c(0,1,2,3)
+# 
+# params = expand.grid(a=a,b=b,smooth=smooth)
+# 
+# # remove sets where both a and b are zero
+# params = params %>%
+#   filter(!(a == 0 & b == 0))
+# 
+# params$detection_params_name = paste0("vwf_",str_pad(1:nrow(params), width=3, pad = "0"))
+# 
+# params$method = "vwf"
+# 
+# # save vwf params
+# write_csv(params,data("parameter_set_definitions/vwfdefs_fullrange.csv"))
 
-params = expand.grid(a=a,b=b,smooth=smooth)
+# load vwf params
+params = read_csv(data("parameter_set_definitions/vwfdefs_fullrange.csv"))
 
-params$vwf_name = str_pad(1:nrow(params), width=3, pad = "0")
 
 
 # ### dev
@@ -65,18 +81,19 @@ params$vwf_name = str_pad(1:nrow(params), width=3, pad = "0")
 # smooth = params_foc$smooth
 
 
-vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, layer_name, a, b, smooth, vwf_name) {
-  
-  
+vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smooth_3, layer_name, a, b, smooth, detection_params_name) {
+
   if(smooth == 1) {
     chm = chm_smooth_1
   } else if(smooth == 2) {
     chm = chm_smooth_2
+  } else if(smooth == 3) {
+    chm = chm_smooth_3
   }
   ## Previously for vwf001
   # a = 0.05
   # b = 0.4
-  lin <- function(x){x * a + b} # window filter function to use in next step
+  lin <- function(x){x * b + a} # window filter function to use in next step
   treetops <- vwf(CHM = chm, winFun = lin, minHeight = 5, maxWinDiameter = 199)
   treetops = as(treetops,"sf") %>% st_transform(4326)
   
@@ -84,21 +101,22 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, layer_n
   
   # create dir if doesn't exist, then write
   
-  layer_name = paste0(paramset_name,"-vwf_",vwf_name,".geojson")
+  file_name = paste0(layer_name,"-",detection_params_name,".geojson")
   
   dir = data(paste0("post_metashape_products/detected_trees"))
   dir.create(dir)
-  st_write(treetops,paste0(dir,"/",layer_name), delete_dsn=TRUE)
+  st_write(treetops,paste0(dir,"/",file_name), delete_dsn=TRUE)
 
 }
 
 
 plan(multiprocess)
-a = future_pmap(params, vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, layer_name = paramset_name)
+
+a = future_pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, layer_name = paramset_name)
 
 
 
-# ## error with either 14 or 39: fixed by installing from github
+    # ## error with either 14 or 39: fixed by installing from github
 # Error in .local(x, ...) : w must have uneven sides
 # In addition: There were 13 warnings (use warnings() to see them)
 
