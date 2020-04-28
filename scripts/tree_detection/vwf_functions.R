@@ -15,8 +15,6 @@ source(here("scripts/convenience_functions.R"))
 #### Main function defs ####
 
 vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smooth_3, layer_name, a, b, smooth, detection_params_name) {
-
-  browser()
   
   if(smooth == 1) {
     chm = chm_smooth_1
@@ -76,7 +74,7 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
 
   
   
-  a = pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, layer_name = chm_layer_name)
+  a = future_pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, layer_name = chm_layer_name)
 
 }
 

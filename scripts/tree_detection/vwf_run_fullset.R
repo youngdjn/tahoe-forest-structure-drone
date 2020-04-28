@@ -10,12 +10,12 @@ library(tidyverse)
 
 #### Get data dir ####
 # The root of the data directory
-data_test = readLines(here("data_dir.txt"), n=1)
+data_dir = readLines(here("data_dir.txt"), n=1)
 
-#### Convenience functions ####
+#### Convenience functions and main functions ####
 
 source(here("scripts/convenience_functions.R"))
-
+source(here("scripts/tree_detection/vwf_functions.R"))
 
 
 
