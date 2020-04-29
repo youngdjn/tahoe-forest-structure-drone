@@ -53,7 +53,7 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smo
   
   dir = data(paste0("post_metashape_products/detected_trees"))
   dir.create(dir)
-  st_write(treetops,paste0(dir,"/",file_name), delete_dsn=TRUE)
+  st_write(treetops,paste0(dir,"/",file_name), delete_dsn=TRUE, quiet=TRUE)
 
 }
 
