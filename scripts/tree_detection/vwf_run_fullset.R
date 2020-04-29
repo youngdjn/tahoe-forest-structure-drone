@@ -68,10 +68,10 @@ write_csv(params,data("parameter_set_definitions/vwfdefs_fullrange.csv"))
 
 
 # Run for multiple CHMs
-plan(multiprocess, workers=8)
+plan(multiprocess)
 
 paramset_names = c("paramset14_01","paramset15a_02", "paramset26b_01", "paramset27b_01")
 
-walk(paramset_names,.f = vwf_singlechm_multiparamset, params = params)
+walk(paramset_names[1],.f = vwf_singlechm_multiparamset, params = params)
 
 

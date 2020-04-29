@@ -16,6 +16,19 @@ source(here("scripts/convenience_functions.R"))
 
 vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smooth_3, chm_smooth_4, chm_smooth_5, chm_smooth_6, chm_smooth_7, chm_smooth_8, chm_smooth_9, chm_smooth_10,  layer_name, a, b, smooth, detection_params_name) {
   
+  cat("Running for:", layer_name, detection_params_name,"\n" )
+  
+  
+  ### see if file name already exists, and if so, skip
+  file_name = paste0(layer_name,"-",detection_params_name,".geojson")
+  dir = data(paste0("post_metashape_products/detected_trees"))
+  if(file.exists(paste0(dir,"/",file_name))) {
+    cat("Already exists:",layer_name, detection_params_name,"\n")
+    return()
+  }
+
+  
+  
   if(smooth == 1) {
     chm = chm_smooth_1
   } else if(smooth == 2) {
@@ -42,7 +55,16 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smo
   # a = 0.05
   # b = 0.4
   lin <- function(x){x * b + a} # window filter function to use in next step
-  treetops <- vwf(CHM = chm, winFun = lin, minHeight = 5, maxWinDiameter = 199)
+  
+  treetops <- try(
+    vwf(CHM = chm, winFun = lin, minHeight = 5, maxWinDiameter = 199)
+  ,silent=TRUE)
+
+  if(class(treetops) == "try-error") {
+    return(FALSE)
+  }
+  
+  
   treetops = as(treetops,"sf") %>% st_transform(4326)
   
   ## Save treetops
@@ -104,7 +126,7 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
   chm_smooth_9 = aggregate(chm, pixels_smooth_2, fun=mean)
   
   chm_smooth_10 = aggregate(chm, pixels_smooth_2, fun=median)
-
+  
   a = future_pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, chm_smooth_4 = chm_smooth_4, chm_smooth_5 = chm_smooth_5, chm_smooth_6 = chm_smooth_6, chm_smooth_7 = chm_smooth_7, chm_smooth_8 = chm_smooth_8, chm_smooth_9 = chm_smooth_9, chm_smooth_10 = chm_smooth_10, layer_name = chm_layer_name)
 
 }
