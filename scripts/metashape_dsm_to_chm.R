@@ -1,7 +1,7 @@
 ## Takes a USGS DEM (DTM) and a Metashape DSM and calculates a CHM
 
 # Name of specific Metashape project for which to process Metashape products
-paramset_name = "paramset15a_02"
+paramset_name = "paramset27b"
 
 library(sf)
 library(raster)
