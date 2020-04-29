@@ -14,7 +14,7 @@ source(here("scripts/convenience_functions.R"))
 
 #### Main function defs ####
 
-vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smooth_3, layer_name, a, b, smooth, detection_params_name) {
+vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smooth_3, chm_smooth_4, chm_smooth_5, chm_smooth_6, chm_smooth_7, chm_smooth_8, chm_smooth_9, chm_smooth_10,  layer_name, a, b, smooth, detection_params_name) {
   
   if(smooth == 1) {
     chm = chm_smooth_1
@@ -22,7 +22,22 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smo
     chm = chm_smooth_2
   } else if(smooth == 3) {
     chm = chm_smooth_3
+  } else if(smooth == 4) {
+    chm = chm_smooth_4
+  } else if(smooth == 5) {
+    chm = chm_smooth_5
+  } else if(smooth == 6) {
+    chm = chm_smooth_6
+  } else if(smooth == 7) {
+    chm = chm_smooth_7
+  } else if(smooth == 8) {
+    chm = chm_smooth_8
+  } else if(smooth == 9) {
+    chm = chm_smooth_7
+  } else if(smooth == 10) {
+    chm = chm_smooth_8
   }
+  
   ## Previously for vwf001
   # a = 0.05
   # b = 0.4
@@ -44,7 +59,7 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smo
 
 
 vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
-
+  
   #### Load data ####
   
   # find the dsm file in the metashape products direcotry
@@ -62,6 +77,7 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
   pixels_smooth_1 = round(((0.5/chm_res)-1)/2)*2 + 1 # round to nearest odd integer
   pixels_smooth_2 = round(((1/chm_res)-1)/2)*2 + 1
   pixels_smooth_3 = round(((1.5/chm_res)-1)/2)*2 + 1
+  pixels_smooth_4 = round(((2/chm_res)-1)/2)*2 + 1
   
   weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
   chm_smooth_1 = focal(chm, weights, fun=mean)
@@ -71,10 +87,25 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
   
   weights = matrix(1,nrow=pixels_smooth_3,ncol=pixels_smooth_3)
   chm_smooth_3 = focal(chm, weights, fun=mean)
+  
+  weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
+  chm_smooth_4 = focal(chm, weights, fun=mean)
+  
+  weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
+  chm_smooth_5 = focal(chm, weights, fun=median)
+  
+  weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
+  chm_smooth_6 = focal(chm, weights, fun=median)
+  
+  chm_smooth_7 = aggregate(chm, pixels_smooth_1, fun=mean)
+  
+  chm_smooth_8 = aggregate(chm, pixels_smooth_1, fun=median)
+  
+  chm_smooth_9 = aggregate(chm, pixels_smooth_2, fun=mean)
+  
+  chm_smooth_10 = aggregate(chm, pixels_smooth_2, fun=median)
 
-  
-  
-  a = future_pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, layer_name = chm_layer_name)
+  a = future_pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, chm_smooth_4 = chm_smooth_4, chm_smooth_5 = chm_smooth_5, chm_smooth_6 = chm_smooth_6, chm_smooth_7 = chm_smooth_7, chm_smooth_8 = chm_smooth_8, chm_smooth_9 = chm_smooth_9, chm_smooth_10 = chm_smooth_10, layer_name = chm_layer_name)
 
 }
 
