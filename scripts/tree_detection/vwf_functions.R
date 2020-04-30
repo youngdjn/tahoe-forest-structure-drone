@@ -14,7 +14,7 @@ source(here("scripts/convenience_functions.R"))
 
 #### Main function defs ####
 
-vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smooth_3, chm_smooth_4, chm_smooth_5, chm_smooth_6, chm_smooth_7, chm_smooth_8, chm_smooth_9, chm_smooth_10,  layer_name, a, b, smooth, detection_params_name) {
+vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smooth_3, chm_smooth_4, chm_smooth_5, chm_smooth_6, chm_smooth_7, chm_smooth_8, layer_name, a, b, smooth, detection_params_name) {
   
   cat("Running for:", layer_name, detection_params_name,"\n" )
   
@@ -22,7 +22,7 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smo
   ### see if file name already exists, and if so, skip
   file_name = paste0(layer_name,"-",detection_params_name,".geojson")
   dir = data(paste0("post_metashape_products/detected_trees"))
-  if(file.exists(paste0(dir,"/",file_name))) {
+  if(file.exists(paste0(dir,"/",file_name)) & !(smooth %in% c(5,6,7,8)) ) {   ###!!! TEMPORARY: allow overwriting for smooths 5, 6, 7, 8
     cat("Already exists:",layer_name, detection_params_name,"\n")
     return()
   }
@@ -44,10 +44,6 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smo
   } else if(smooth == 7) {
     chm = chm_smooth_7
   } else if(smooth == 8) {
-    chm = chm_smooth_8
-  } else if(smooth == 9) {
-    chm = chm_smooth_7
-  } else if(smooth == 10) {
     chm = chm_smooth_8
   }
   
@@ -114,21 +110,39 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
   weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
   chm_smooth_4 = focal(chm, weights, fun=mean)
   
-  weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
+  weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
   chm_smooth_5 = focal(chm, weights, fun=median)
+  #now smooth it slightly with a mean weighted primarily by the middle pixel
+  middle_pixel = ceiling(pixels_smooth_1/2)
+  weights[middle_pixel,middle_pixel] = 1*length(weights)
+  weights = weights/(mean(weights))
+  chm_smooth_5 = focal(chm_smooth_5, weights, fun=mean)
+  
+  weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
+  chm_smooth_6 = focal(chm, weights, fun=median)
+  #now smooth it slightly with a mean weighted primarily by the middle pixel
+  middle_pixel = ceiling(pixels_smooth_2/2)
+  weights[middle_pixel,middle_pixel] = 1*length(weights)
+  weights = weights/(mean(weights))
+  chm_smooth_6 = focal(chm_smooth_6, weights, fun=mean)
+  
+  weights = matrix(1,nrow=pixels_smooth_3,ncol=pixels_smooth_3)
+  chm_smooth_7 = focal(chm, weights, fun=median)
+  #now smooth it slightly with a mean weighted primarily by the middle pixel
+  middle_pixel = ceiling(pixels_smooth_3/2)
+  weights[middle_pixel,middle_pixel] = 1*length(weights)
+  weights = weights/(mean(weights))
+  chm_smooth_7 = focal(chm_smooth_7, weights, fun=mean)
   
   weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
-  chm_smooth_6 = focal(chm, weights, fun=median)
+  chm_smooth_8 = focal(chm, weights, fun=median)
+  #now smooth it slightly with a mean weighted primarily by the middle pixel
+  middle_pixel = ceiling(pixels_smooth_4/2)
+  weights[middle_pixel,middle_pixel] = 1*length(weights)
+  weights = weights/(mean(weights))
+  chm_smooth_8 = focal(chm_smooth_8, weights, fun=mean)
   
-  chm_smooth_7 = aggregate(chm, pixels_smooth_1, fun=mean)
-  
-  chm_smooth_8 = aggregate(chm, pixels_smooth_1, fun=median)
-  
-  chm_smooth_9 = aggregate(chm, pixels_smooth_2, fun=mean)
-  
-  chm_smooth_10 = aggregate(chm, pixels_smooth_2, fun=median)
-  
-  a = future_pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, chm_smooth_4 = chm_smooth_4, chm_smooth_5 = chm_smooth_5, chm_smooth_6 = chm_smooth_6, chm_smooth_7 = chm_smooth_7, chm_smooth_8 = chm_smooth_8, chm_smooth_9 = chm_smooth_9, chm_smooth_10 = chm_smooth_10, layer_name = chm_layer_name)
+  a = future_pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, chm_smooth_4 = chm_smooth_4, chm_smooth_5 = chm_smooth_5, chm_smooth_6 = chm_smooth_6, chm_smooth_7 = chm_smooth_7, chm_smooth_8 = chm_smooth_8, layer_name = chm_layer_name)
 
 }
 
