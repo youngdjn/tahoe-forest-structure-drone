@@ -61,6 +61,7 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smo
   ,silent=TRUE)
 
   if(class(treetops) == "try-error") {
+    cat("***** Skipping:", layer_name, detection_params_name,"because of VWF error ******\n" )
     return(FALSE)
   }
   
