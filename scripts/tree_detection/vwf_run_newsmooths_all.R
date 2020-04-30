@@ -76,6 +76,7 @@ params = params %>%
 
 
 # Run for multiple CHMs
+options('future.globals.maxSize' = 2*1014*1024^2) # 2 GB
 plan(multiprocess)
 
 paramset_names = c("paramset14_01","paramset15a_02", "paramset26b_01", "paramset27b_01")

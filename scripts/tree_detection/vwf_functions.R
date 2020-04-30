@@ -114,7 +114,7 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
   chm_smooth_5 = focal(chm, weights, fun=median)
   #now smooth it slightly with a mean weighted primarily by the middle pixel
   middle_pixel = ceiling(pixels_smooth_1/2)
-  weights[middle_pixel,middle_pixel] = 1*length(weights)
+  weights[middle_pixel,middle_pixel] = 10*length(weights)
   weights = weights/(mean(weights))
   chm_smooth_5 = focal(chm_smooth_5, weights, fun=mean)
   
@@ -122,7 +122,7 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
   chm_smooth_6 = focal(chm, weights, fun=median)
   #now smooth it slightly with a mean weighted primarily by the middle pixel
   middle_pixel = ceiling(pixels_smooth_2/2)
-  weights[middle_pixel,middle_pixel] = 1*length(weights)
+  weights[middle_pixel,middle_pixel] = 10*length(weights)
   weights = weights/(mean(weights))
   chm_smooth_6 = focal(chm_smooth_6, weights, fun=mean)
   
@@ -130,7 +130,7 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
   chm_smooth_7 = focal(chm, weights, fun=median)
   #now smooth it slightly with a mean weighted primarily by the middle pixel
   middle_pixel = ceiling(pixels_smooth_3/2)
-  weights[middle_pixel,middle_pixel] = 1*length(weights)
+  weights[middle_pixel,middle_pixel] = 10*length(weights)
   weights = weights/(mean(weights))
   chm_smooth_7 = focal(chm_smooth_7, weights, fun=mean)
   
@@ -138,7 +138,7 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
   chm_smooth_8 = focal(chm, weights, fun=median)
   #now smooth it slightly with a mean weighted primarily by the middle pixel
   middle_pixel = ceiling(pixels_smooth_4/2)
-  weights[middle_pixel,middle_pixel] = 1*length(weights)
+  weights[middle_pixel,middle_pixel] = 10*length(weights)
   weights = weights/(mean(weights))
   chm_smooth_8 = focal(chm_smooth_8, weights, fun=mean)
   
