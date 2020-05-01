@@ -29,7 +29,10 @@ stats = map_dfr(stats_files, read_csv)
 
 ## Pull in config defs
 stats = stats %>%
-  mutate(config_name = str_split(drone_map_name,"-") %>% map_chr(2))
+  mutate(config_name = str_split(drone_map_name,"-") %>% map_chr(2)) %>%
+  mutate(chm_name = str_split(drone_map_name,"-") %>% map_chr(1))
+
+
 
 stats = left_join(stats, configs, by = c("config_name"="detection_params_name"))
 
@@ -46,14 +49,14 @@ stats = stats %>%
 ### Plotting of best params
 
 vwf_dat = stats %>%
-  filter(tree_position == "all",
-         height_cat == "20+",
-         )
+  filter(tree_position == "single",
+         height_cat == "10+",
+  )
 
 
 ggplot(vwf_dat, aes(x = a, y = b, fill = f_score)) +
   geom_tile() +
-  facet_wrap("smooth") +
+  facet_grid(chm_name~smooth) +
   scale_fill_viridis_c()
 
 
