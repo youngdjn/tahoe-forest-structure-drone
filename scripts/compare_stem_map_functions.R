@@ -443,7 +443,7 @@ match_compare_single = function(ground_map, drone_map, drone_map_name) {
   
   
   ## make a shapefile of lines connecting the drone-ground tree pairs
-  make_lines_between_matches(ground_map_compared, data_prepped$drone_map, drone_map_name)
+  #make_lines_between_matches(ground_map_compared, data_prepped$drone_map, drone_map_name)
 
 }
 
