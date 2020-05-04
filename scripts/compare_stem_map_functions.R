@@ -451,8 +451,24 @@ match_compare_single = function(ground_map, drone_map, drone_map_name) {
 
 
 match_compare_single_wrapper = function(ground_map, drone_map_file) {
+  
+  ## get drone map name from filename
+  parts = str_split(drone_map_file,"/")[[1]]
+  filename = parts[length(parts)]
+  drone_map_name = str_split(filename,"\\.")[[1]][1]
+  
+  ## what would the output file be? So that we can skip if it exists 
+  outfile = data(paste0("drone_map_evals/comparison_stats/individual/stats_", drone_map_name, ".csv"))
+  
+  if(file.exists(outfile)) {  
+    cat("Already exists:",outfile,". Skipping.\n")
+    return(FALSE)
+  }
 
+  
   drone_map = st_read(drone_map_file, quiet=TRUE) %>% st_transform(3310)
+  
+  
   
 
   #### Filter drone map data to only trees within the height search distance of the smallest size category
@@ -467,10 +483,7 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   }
   
   
-  ## get drone map name from filename
-  parts = str_split(drone_map_file,"/")[[1]]
-  filename = parts[length(parts)]
-  drone_map_name = str_split(filename,"\\.")[[1]][1]
+
   
   
   ## Run compariston/eval ##
