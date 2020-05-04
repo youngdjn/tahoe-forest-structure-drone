@@ -22,14 +22,11 @@ source(here("scripts/tree_detection/vwf_functions.R"))
 
 ### Define parameter values to search: only need to run if set defs change
 
-dynamicWindow_pines <- function(x) {
-  window_radius <- 0.5 * (3.75105 - 0.17919*x + 0.01241 * x^2)
-  window_radius
-}
 
-c = seq(-0.002, 0.002, by = 0.001)
-b = seq(-0.02, 0.02, by=0.01)
-a = seq(-1, 1, by = 0.5)
+
+c = seq(-0.002, 0.001, by = 0.0005)
+b = seq(-0.03, 0.05, by=0.01)
+a = seq(-1, 2, by = 0.5)
 smooth = c(1)
 
 params = expand.grid(a=a,b=b,c=c,smooth=smooth)
@@ -51,6 +48,6 @@ plan(multiprocess)
 
 paramset_names = c("paramset14_01")
 
-walk(paramset_names[1],.f = vwf_singlechm_multiparamset, parallelize_params = TRUE, params = params)
+walk(paramset_names,.f = vwf_singlechm_multiparamset, parallelize_params = TRUE, params = params)
 
 
