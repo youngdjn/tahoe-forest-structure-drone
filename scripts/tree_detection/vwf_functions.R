@@ -14,43 +14,42 @@ source(here("scripts/convenience_functions.R"))
 
 #### Main function defs ####
 
-vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smooth_3, chm_smooth_4, chm_smooth_5, chm_smooth_6, chm_smooth_7, chm_smooth_8, layer_name, a, b, smooth, detection_params_name) {
+vwf_singlechm_singleparamset = function(chms, layer_name, a, b, c = 0, smooth, detection_params_name) {
   
   cat("Running for:", layer_name, detection_params_name,"\n" )
-  
   
   ### see if file name already exists, and if so, skip
   file_name = paste0(layer_name,"-",detection_params_name,".geojson")
   dir = data(paste0("post_metashape_products/detected_trees"))
-  if(file.exists(paste0(dir,"/",file_name)) & !(smooth %in% c(5,6,7,8)) ) {   ###!!! TEMPORARY: allow overwriting for smooths 5, 6, 7, 8
+  if(file.exists(paste0(dir,"/",file_name))) {  
     cat("Already exists:",layer_name, detection_params_name,"\n")
     return()
   }
 
-  
-  
-  if(smooth == 1) {
-    chm = chm_smooth_1
+  if(smooth == 0) {
+    chm = chms[["smooth0"]]
+  } else if(smooth == 1) {
+    chm = chms[["smooth1"]]
   } else if(smooth == 2) {
-    chm = chm_smooth_2
+    chm = chms[["smooth2"]]
   } else if(smooth == 3) {
-    chm = chm_smooth_3
+    chm = chms[["smooth3"]]
   } else if(smooth == 4) {
-    chm = chm_smooth_4
+    chm = chms[["smooth4"]]
   } else if(smooth == 5) {
-    chm = chm_smooth_5
+    chm = chms[["smooth5"]]
   } else if(smooth == 6) {
-    chm = chm_smooth_6
+    chm = chms[["smooth6"]]
   } else if(smooth == 7) {
-    chm = chm_smooth_7
+    chm = chms[["smooth7"]]
   } else if(smooth == 8) {
-    chm = chm_smooth_8
+    chm = chms[["smooth8"]]
+  } else {
+    stop("Requested smoothed chm",smooth,"not provided.")
   }
   
-  ## Previously for vwf001
-  # a = 0.05
-  # b = 0.4
-  lin <- function(x){x * b + a} # window filter function to use in next step
+
+  lin <- function(x){x^2*c + x*b + a} # window filter function to use in next step
   
   treetops <- try(
     vwf(CHM = chm, winFun = lin, minHeight = 5, maxWinDiameter = 199)
@@ -77,7 +76,7 @@ vwf_singlechm_singleparamset = function(chm, chm_smooth_1, chm_smooth_2, chm_smo
 }
 
 
-vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
+vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets, parallelize_params = parallelize_params) {
   
   #### Load data ####
   
@@ -88,62 +87,89 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets) {
   
   chm = raster(chm_file)
   
+  chms = list()
+  chms[["smooth0"]] = chm
+  
+  
   ## Get the CHM layer name from the chm_file
   
   
-  # create two smoothed rasters: 1 m window width and 0.5 m window width
+  ### Create the needed smoothed rasters
+  
+  smooths = unique(params$smooth)
+  
   chm_res = res(chm) %>% mean
   pixels_smooth_1 = round(((0.5/chm_res)-1)/2)*2 + 1 # round to nearest odd integer
   pixels_smooth_2 = round(((1/chm_res)-1)/2)*2 + 1
   pixels_smooth_3 = round(((1.5/chm_res)-1)/2)*2 + 1
   pixels_smooth_4 = round(((2/chm_res)-1)/2)*2 + 1
   
-  weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
-  chm_smooth_1 = focal(chm, weights, fun=mean)
+  if(1 %in% smooths) {
+    weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
+    chms[["smooth1"]] = focal(chm, weights, fun=mean)
+  }
   
-  weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
-  chm_smooth_2 = focal(chm, weights, fun=mean)
+  if(2 %in% smooths) {
+    weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
+    chms[["smooth2"]] = focal(chm, weights, fun=mean)
+  }
   
-  weights = matrix(1,nrow=pixels_smooth_3,ncol=pixels_smooth_3)
-  chm_smooth_3 = focal(chm, weights, fun=mean)
+  if(3 %in% smooths) {
+    weights = matrix(1,nrow=pixels_smooth_3,ncol=pixels_smooth_3)
+    chms[["smooth3"]] = focal(chm, weights, fun=mean)
+  }
   
-  weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
-  chm_smooth_4 = focal(chm, weights, fun=mean)
+  if(4 %in% smooths) {
+    weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
+    chms[["smooth4"]] = focal(chm, weights, fun=mean)
+  }
   
-  weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
-  chm_smooth_5 = focal(chm, weights, fun=median)
-  #now smooth it slightly with a mean weighted primarily by the middle pixel
-  middle_pixel = ceiling(pixels_smooth_1/2)
-  weights[middle_pixel,middle_pixel] = 10*length(weights)
-  weights = weights/(mean(weights))
-  chm_smooth_5 = focal(chm_smooth_5, weights, fun=mean)
+  if(5 %in% smooths) {
+    weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
+    chm_smooth_5 = focal(chm, weights, fun=median)
+    #now smooth it slightly with a mean weighted primarily by the middle pixel
+    middle_pixel = ceiling(pixels_smooth_1/2)
+    weights[middle_pixel,middle_pixel] = 10*length(weights)
+    weights = weights/(mean(weights))
+    chms[["smooth5"]] = focal(chm_smooth_5, weights, fun=mean)
+  }
   
-  weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
-  chm_smooth_6 = focal(chm, weights, fun=median)
-  #now smooth it slightly with a mean weighted primarily by the middle pixel
-  middle_pixel = ceiling(pixels_smooth_2/2)
-  weights[middle_pixel,middle_pixel] = 10*length(weights)
-  weights = weights/(mean(weights))
-  chm_smooth_6 = focal(chm_smooth_6, weights, fun=mean)
+  if(6 %in% smooths) {
+    weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
+    chm_smooth_6 = focal(chm, weights, fun=median)
+    #now smooth it slightly with a mean weighted primarily by the middle pixel
+    middle_pixel = ceiling(pixels_smooth_2/2)
+    weights[middle_pixel,middle_pixel] = 10*length(weights)
+    weights = weights/(mean(weights))
+    chms[["smooth6"]] = focal(chm_smooth_6, weights, fun=mean)
+  }
   
-  weights = matrix(1,nrow=pixels_smooth_3,ncol=pixels_smooth_3)
-  chm_smooth_7 = focal(chm, weights, fun=median)
-  #now smooth it slightly with a mean weighted primarily by the middle pixel
-  middle_pixel = ceiling(pixels_smooth_3/2)
-  weights[middle_pixel,middle_pixel] = 10*length(weights)
-  weights = weights/(mean(weights))
-  chm_smooth_7 = focal(chm_smooth_7, weights, fun=mean)
+  if(7 %in% smooths) {
+    weights = matrix(1,nrow=pixels_smooth_3,ncol=pixels_smooth_3)
+    chm_smooth_7 = focal(chm, weights, fun=median)
+    #now smooth it slightly with a mean weighted primarily by the middle pixel
+    middle_pixel = ceiling(pixels_smooth_3/2)
+    weights[middle_pixel,middle_pixel] = 10*length(weights)
+    weights = weights/(mean(weights))
+    chms[["smooth7"]] = focal(chm_smooth_7, weights, fun=mean)
+  }
   
-  weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
-  chm_smooth_8 = focal(chm, weights, fun=median)
-  #now smooth it slightly with a mean weighted primarily by the middle pixel
-  middle_pixel = ceiling(pixels_smooth_4/2)
-  weights[middle_pixel,middle_pixel] = 10*length(weights)
-  weights = weights/(mean(weights))
-  chm_smooth_8 = focal(chm_smooth_8, weights, fun=mean)
+  if(8 %in% smooths) {
+    weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
+    chm_smooth_8 = focal(chm, weights, fun=median)
+    #now smooth it slightly with a mean weighted primarily by the middle pixel
+    middle_pixel = ceiling(pixels_smooth_4/2)
+    weights[middle_pixel,middle_pixel] = 10*length(weights)
+    weights = weights/(mean(weights))
+    chms[["smooth8"]] = focal(chm_smooth_8, weights, fun=mean)
+  }
   
-  a = future_pmap(params %>% select(-method), vwf_singlechm_singleparamset , chm=chm, chm_smooth_1 = chm_smooth_1, chm_smooth_2 = chm_smooth_2, chm_smooth_3 = chm_smooth_3, chm_smooth_4 = chm_smooth_4, chm_smooth_5 = chm_smooth_5, chm_smooth_6 = chm_smooth_6, chm_smooth_7 = chm_smooth_7, chm_smooth_8 = chm_smooth_8, layer_name = chm_layer_name)
-
+  if(parallelize_params) {
+    a = future_pmap(params %>% select(-method) %>% sample_frac(), vwf_singlechm_singleparamset , chms=chms, layer_name = chm_layer_name)
+  } else {
+    a = pmap(params %>% select(-method), vwf_singlechm_singleparamset , chms=chms, layer_name = chm_layer_name)
+    
+  }
 }
 
 

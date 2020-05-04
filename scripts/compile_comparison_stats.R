@@ -50,17 +50,18 @@ stats = stats %>%
 
 vwf_dat = stats %>%
   filter(tree_position == "single",
-         height_cat == "10+",
-  )
+         height_cat == "20+",
+         smooth %in% c(0:8)) %>%
+  mutate(f_score = ifelse(f_score < 0.5, NA, f_score))
 
 
-ggplot(vwf_dat, aes(x = a, y = b, fill = f_score)) +
+ggplot(vwf_dat, aes(x = a, y = b, fill = height_mae)) +
   geom_tile() +
   facet_grid(chm_name~smooth) +
   scale_fill_viridis_c()
 
 
-### Make a list of the best paramsets
+  ### Make a list of the best paramsets
 
 ## For each combo of tree position & height, get the parameter set that maximizes f_score and correlation
 
