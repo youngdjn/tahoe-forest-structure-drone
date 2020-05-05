@@ -45,7 +45,7 @@ crop_and_write_las = function(las_file) {
   filename_only = fileparts[length(fileparts)]
 
   # file to write
-  filename = paste0("/storage/forestuav/metashape_outputs_postprocessed/",filename_only,".laz")
+  filename = paste0("/storage/forestuav/metashape_outputs_postprocessed/las/",filename_only,".laz")
 
   # skip if file aleady exists
   if(file.exists(filename)) {
