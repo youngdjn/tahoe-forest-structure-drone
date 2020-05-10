@@ -114,7 +114,7 @@ remove_overmatched_drone_trees = function(ground_map) {
 }
 
 
-## run the matching
+## Run the matching
 
 compare_tree_maps = function(ground_map, drone_map) {
   
@@ -153,13 +153,19 @@ compare_tree_maps = function(ground_map, drone_map) {
 
 #### Prep data ####
 
-prep_data = function(ground_map, drone_map) {
+prep_data = function(ground_map, drone_map, reduced_area) {
   
   # assign tree IDs
   drone_map$drone_tree_id = 1:nrow(drone_map)
   
   # Clip to extent of ground map (buffered by search radius)
-  ground_map_footprint = ground_map %>% st_union %>% st_convex_hull
+  # formerly: ground_map_footprint = ground_map %>% st_union %>% st_convex_hull
+  if(reduced_area) {
+    ground_map_footprint = st_read(data("study_area_perimeter/smaller_project_mask.geojson")) %>% st_transform(st_crs(drone_map))
+  } else {
+    ground_map_footprint = st_read(data("study_area_perimeter/ground_map_mask_precise.geojson")) %>% st_transform(st_crs(drone_map))
+  }
+
   drone_map = st_intersection(drone_map,ground_map_footprint %>% st_buffer(search_distance) )
   
   # Need a label to know if drone map trees were part of a buffered-in polygon
@@ -311,8 +317,9 @@ calc_match_stats = function(ground_map, drone_map) {
 
 
 plot_based_comparison = function(prepped_ground, prepped_drone) {
-
-  ground_hull = prepped_ground %>% st_union %>% st_convex_hull %>% st_buffer(-25)
+  
+  # formerly: ground_hull = prepped_ground %>% st_union %>% st_convex_hull %>% st_buffer(-25)
+  ground_hull = st_read(data("study_area_perimeter/ground_map_mask_precise.geojson")) %>% st_transform(st_crs(prepped_ground)) %>% st_buffer(-25)
   
   grid = st_make_grid(ground_hull, cellsize=25)
   grid_inside = st_contains(ground_hull,grid, sparse=FALSE)
@@ -412,11 +419,10 @@ make_lines_between_matches = function(ground_map, drone_map, drone_map_name) {
 
 
 ## Function to match and compare a single drone map to the ground map (also make a lines shapefile with connections between trees)
-match_compare_single = function(ground_map, drone_map, drone_map_name) {
+match_compare_single = function(data_prepped, drone_map_name) {
   
   cat("Comparing to ground map:",drone_map_name,"\n")
 
-  data_prepped = prep_data(ground_map, drone_map)
   ground_map_compared = compare_tree_maps(data_prepped$ground_map, data_prepped$drone_map)
   match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
   match_stats_alltrees$tree_position = "all"
@@ -468,27 +474,36 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   
   drone_map = st_read(drone_map_file, quiet=TRUE) %>% st_transform(3310)
   
+  #### For the reduced-area drone surveys, clip the ground map to the smaller mask
   
+  ## projects applicable: 14b, 15b, 19b, 20b, 
+  reduced_area = grepl("14b_|15b_|19b_|20b_|41_|42_", drone_map_file)
+  if(reduced_area) {
+    cat("Using reduced-area polygon for",drone_map_file,"\n")
+    smaller_project_mask = st_read(data("study_area_perimeter/smaller_project_mask.geojson")) %>% st_transform(st_crs(ground_map))
+    smaller_project_mask = smaller_project_mask %>% st_buffer(-search_distance)
+    ground_map_new = st_intersection(ground_map,smaller_project_mask)
+  } else{
+    ground_map_new = ground_map
+  }
   
-
   #### Filter drone map data to only trees within the height search distance of the smallest size category
   drone_map = drone_map %>%
     filter(height >= (smallest_size-smallest_size*search_height_proportion))
   
+  #### Prep the maps by cropping etc
+  data_prepped = prep_data(ground_map_new, drone_map, reduced_area = reduced_area)
+  
   ### If the drone map has > 3x as many trees as the ground map, or < 1/2, skip it
-  n_drone_trees = nrow(drone_map)
-  n_ground_trees = nrow(ground_map)
-  if((n_drone_trees > 3*n_ground_trees) | (n_drone_trees < 0.5*n_ground_trees)) {
+  n_drone_trees = nrow(data_prepped$drone_map)
+  n_ground_trees = nrow(data_prepped$ground_map)
+  if((n_drone_trees > 3*n_ground_trees) | (n_drone_trees < 0.3*n_ground_trees)) {
     return(FALSE)
   }
   
-  
-
-  
-  
   ## Run compariston/eval ##
-  match_compare_single(ground_map, drone_map, drone_map_name = drone_map_name)
-  
+  match_compare_single(data_prepped, drone_map_name = drone_map_name)
+
   return(TRUE)
   
 }
