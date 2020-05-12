@@ -1,5 +1,5 @@
 ## Takes a CHM and makes a map of treetops
-
+  
 
 ## Convenience functions ####
 source(here("scripts/convenience_functions.R"))
@@ -95,7 +95,20 @@ las_singlelas_allparams = function(las_layer_name, params) {
       ttops_sf = ttops %>%
         st_as_sf()
       
+    } else if(params_current$method == "hamraz") {
+    
+      segmented = segment_trees(las_thinned,hamraz2016())
+      
+      ttops_sf = segmented %>% 
+        slot("data") %>% 
+        dplyr::group_by(treeID) %>%
+        dplyr::filter(Z == max(Z)) %>%
+        dplyr::ungroup() %>%
+        st_as_sf(coords = c("X", "Y"),
+                 crs = proj4string(las))
     }
+    
+    
     
     ttops_sf = ttops_sf %>%
       rename(height = Z) %>%
