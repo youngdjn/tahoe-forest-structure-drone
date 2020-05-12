@@ -63,7 +63,8 @@ if(length(command_args) == 0) {
 # Ramdomize paramset names so can run multiple parallel
 paramset_names = paramset_names %>% sample()
 
-### Run the search 
+### Run the search
+options(future.globals.maxSize=5000*1024^2) # 5 GB
 plan(multiprocess)
 walk(paramset_names,.f = vwf_singlechm_multiparamset, parallelize_params = TRUE, params = params)
 
