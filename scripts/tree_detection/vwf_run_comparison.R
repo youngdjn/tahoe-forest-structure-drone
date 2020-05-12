@@ -60,6 +60,8 @@ if(length(command_args) == 0) {
   paramset_names = command_args[1]
 }
 
+# Ramdomize paramset names so can run multiple parallel
+paramset_names = paramset_names %>% sample()
 
 ### Run the search 
 plan(multiprocess)
