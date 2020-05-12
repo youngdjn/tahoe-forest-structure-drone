@@ -20,7 +20,7 @@ vwf_singlechm_singleparamset = function(chms, layer_name, a, b, c = 0, smooth, d
   
   ### see if file name already exists, and if so, skip
   file_name = paste0(layer_name,"-",detection_params_name,".geojson")
-  dir = data(paste0("post_metashape_products/detected_trees"))
+  dir = data(paste0("detected_trees"))
   if(file.exists(paste0(dir,"/",file_name))) {  
     cat("Already exists:",layer_name, detection_params_name,"\n")
     return()
@@ -69,7 +69,7 @@ vwf_singlechm_singleparamset = function(chms, layer_name, a, b, c = 0, smooth, d
   
   file_name = paste0(layer_name,"-",detection_params_name,".geojson")
   
-  dir = data(paste0("post_metashape_products/detected_trees"))
+  dir = data(paste0("detected_trees"))
   dir.create(dir)
   st_write(treetops,paste0(dir,"/",file_name), delete_dsn=TRUE, quiet=TRUE)
 
@@ -77,21 +77,35 @@ vwf_singlechm_singleparamset = function(chms, layer_name, a, b, c = 0, smooth, d
 
 
 vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets, parallelize_params = parallelize_params) {
-  
+
   #### Load data ####
   
   # find the dsm file in the metashape products direcotry
-  chm_file = list.files(data("post_metashape_products/chm"),pattern=chm_layer_name, full.names=TRUE)
-  if(length(chm_file) > 1) stop("More than 1 matching CHM file in the specified metashape data products folder.")
+  chm_files = list.files(data("metashape_products/chm"),pattern=chm_layer_name, full.names=TRUE)
+  if(length(chm_files) > 1) {
+    
+    cat("More than 1 matching CHM file in the specified metashape data products folder for",chm_layer_name,". Using most recent.\n") 
+    
+    # get the date
+    pieces = str_split(chm_files,"/")
+    filenames = map(pieces,sapply(pieces,length)[1]) %>% unlist
+    dates = filenames %>% str_split("_") %>% map(3) %>% unlist
+    # which date is later?
+    latest = which(order(dates) == max(order(dates)))
+    chm_file <- chm_files[latest]
+    
+  }
+  
   if(length(chm_file) == 0) stop("No matching CHM files int he specified metashape data products folder.")
   
   chm = raster(chm_file)
   
-  chms = list()
-  chms[["smooth0"]] = chm
-  
   
   ## Get the CHM layer name from the chm_file
+  pieces = str_split(chm_file,"/")
+  filename = map(pieces,sapply(pieces,length)[1]) %>% unlist
+  filename_noextension = str_split(filename,fixed(".")) %>% map(1) %>% unlist()
+  chm_layer_name = filename_noextension
   
   
   ### Create the needed smoothed rasters
@@ -103,6 +117,12 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets, paral
   pixels_smooth_2 = round(((1/chm_res)-1)/2)*2 + 1
   pixels_smooth_3 = round(((1.5/chm_res)-1)/2)*2 + 1
   pixels_smooth_4 = round(((2/chm_res)-1)/2)*2 + 1
+  
+  chms = list()
+  
+  if(0 %in% smooths) {
+  chms[["smooth0"]] = chm
+  }
   
   if(1 %in% smooths) {
     weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
@@ -165,9 +185,9 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets, paral
   }
   
   if(parallelize_params) {
-    a = future_pmap(params %>% select(-method) %>% sample_frac(), vwf_singlechm_singleparamset , chms=chms, layer_name = chm_layer_name)
+    a = future_pmap(params %>% dplyr::select(-method) %>% sample_frac(), vwf_singlechm_singleparamset , chms=chms, layer_name = chm_layer_name, .options = future_options(scheduling=Inf))
   } else {
-    a = pmap(params %>% select(-method), vwf_singlechm_singleparamset , chms=chms, layer_name = chm_layer_name)
+    a = pmap(params %>% dplyr::select(-method), vwf_singlechm_singleparamset , chms=chms, layer_name = chm_layer_name)
     
   }
 }
