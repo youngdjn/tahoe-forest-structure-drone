@@ -94,9 +94,11 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets, paral
     latest = which(order(dates) == max(order(dates)))
     chm_file <- chm_files[latest]
     
+  } else if(length(chm_file) == 0) {
+      stop("No matching CHM files int he specified metashape data products folder.")
+  } else {
+    chm_file = chm_files
   }
-  
-  if(length(chm_file) == 0) stop("No matching CHM files int he specified metashape data products folder.")
   
   chm = raster(chm_file)
   
