@@ -92,7 +92,7 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets, paral
     dates = filenames %>% str_split("_") %>% map(3) %>% unlist
     # which date is later?
     latest = which(order(dates) == max(order(dates)))
-    chm_file <- chm_files[latest]
+    chm_file = chm_files[latest]
     
   } else if(length(chm_file) == 0) {
       stop("No matching CHM files int he specified metashape data products folder.")
