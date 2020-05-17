@@ -1,4 +1,4 @@
-#### For each ground plot and subplot, determine number of trees that have been aligned to drone map.
+#### For each ground plot and subplot, determine number of trees that have been aligned to drone map, get shifts
 # Author: Derek Young
 
 
@@ -83,7 +83,7 @@ tree_matches = map_dfr(1:nrow(ground_trees_corr), compare_ground_drone)
 
 tree_matches = tree_matches %>%
   mutate(shifted = abs(ground_tree_shift_x) > 0.01 | abs(ground_tree_shift_y) > 0.01) %>%
-  mutate(aligned = abs(ground_drone_offset_x) < 0.15 & abs(ground_drone_offset_y) < 0.15)
+  mutate(aligned = abs(ground_drone_offset_x) < 0.15 & abs(ground_drone_offset_y) < 0.15) ## NOTE that aligned is not actually used for filtering
 
 
 #### Summarize shifted trees ####
@@ -136,7 +136,7 @@ tree_shift_col_locs = tree_shift_summary %>%
   summarize(x_shift_var = sd(mean_x_shift),
          y_shift_var = sd(mean_y_shift))
 
-#### Extract plot-level tree shift direction average; combine with subplot-level; use subplot-level shift if n trees shifted > 3, otherwise use plot level
+#### Extract plot-level tree shift direction average; combine with subplot-level; use subplot-level shift if n trees shifted > 7, otherwise use plot level
 tree_shift_dir_summary_plot = tree_matches %>%
   filter(shifted) %>%
   group_by(ground_tree_plot) %>%
@@ -154,8 +154,8 @@ tree_shift_dir_summary = full_join(tree_shift_dir_summary_plot,tree_shift_dir_su
 
 ## rules for what shift to use
 tree_shift_dir_summary = tree_shift_dir_summary %>%
-  mutate(derived_shift_x = ifelse(n_trees_shifted_subplot > 2, mean_x_shift_subplot, mean_x_shift_plot),
-         derived_shift_y = ifelse(n_trees_shifted_subplot > 2, mean_y_shift_subplot, mean_y_shift_plot))
+  mutate(derived_shift_x = ifelse(n_trees_shifted_subplot > 7, mean_x_shift_subplot, mean_x_shift_plot),
+         derived_shift_y = ifelse(n_trees_shifted_subplot > 7, mean_y_shift_subplot, mean_y_shift_plot))
 
 
 #### Write it ####
