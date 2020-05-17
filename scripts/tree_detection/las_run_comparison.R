@@ -63,8 +63,9 @@ paramset_names = paramset_names %>% sample()
 
 ### Run the search
 set_lidr_threads(1)
+options(lidR.progress = FALSE)
 options(future.globals.maxSize=5000*1024^2) # 5 GB
 plan(multiprocess)
-
+  
 
 future_map(paramset_names,.f = las_singlelas_allparams, params = params, .options=future_options(scheduling=Inf))

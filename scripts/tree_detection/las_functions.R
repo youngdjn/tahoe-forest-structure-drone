@@ -57,12 +57,25 @@ las_singlelas_allparams = function(las_layer_name, params) {
       next()
     }
     
+    cat("Starting tree detection for", paste0(las_layer_name,"-",params_current$detection_params_name),"\n")
     
     ### Thin the LAS as specified by the params
     las_thinned = decimate_points(las, homogenize(params_current$decimate,1))
-
     
-    if(params_current$method == "li") {
+
+    if(params_current$method == "layerstacking") {
+      
+      ttops = try({find_trees(las_thinned,LayerStacking(hmin=5,start = 1,hardwood=params_current$hardwood))}, silent = TRUE)
+      
+      if(class(ttops) == "try-error") {
+        cat("Point cloud too poor for LayerStacking for", paste0(las_layer_name,"-",params_current$detection_params_name),"\n")
+        next()
+      }
+      
+      ttops_sf = ttops %>%
+        st_as_sf()
+      
+    } else if(params_current$method == "li") {
       
       segmented = segment_trees(las_thinned,li2012(hmin=5,dt1=params_current$dt1,dt2=params_current$dt2, Zu = params_current$zu, R=params_current$r, speed_up = params_current$speedUp))
       
@@ -76,15 +89,25 @@ las_singlelas_allparams = function(las_layer_name, params) {
 
     } else if(params_current$method == "lmfx") {
       
-      ttops = find_trees(las_thinned, lmfx(hmin=5,dist_2d=params_current$dist2d,ws=params_current$ws))
+      ttops = try({find_trees(las_thinned, lmfx(hmin=5,dist_2d=params_current$dist2d,ws=params_current$ws))}, silent = TRUE)
+      
+      if(class(ttops) == "try-error") {
+        cat("Point cloud too poor for lmfx for", paste0(las_layer_name,"-",params_current$detection_params_name),"\n")
+        next()
+      }
       
       ttops_sf = ttops %>%
         st_as_sf()
 
     } else if(params_current$method == "multichm") {
       
-      ttops = find_trees(las_thinned, multichm(hmin=5,dist_2d=params_current$dist2d,ws=params_current$ws, res = params_current$res, layer_thickness = params_current$layer_thickness, dist_3d = params_current$dist3d, use_max = params_current$use_max))
+      ttops = try({find_trees(las_thinned, multichm(hmin=5,dist_2d=params_current$dist2d,ws=params_current$ws, res = params_current$res, layer_thickness = params_current$layer_thickness, dist_3d = params_current$dist3d, use_max = params_current$use_max))}, silent = TRUE)
 
+      if(class(ttops) == "try-error") {
+        cat("Point cloud too poor for multichm for", paste0(las_layer_name,"-",params_current$detection_params_name),"\n")
+        next()
+      }
+      
       ttops_sf = ttops %>%
         st_as_sf()
 
@@ -97,7 +120,12 @@ las_singlelas_allparams = function(las_layer_name, params) {
       
     } else if(params_current$method == "hamraz") {
     
-      segmented = segment_trees(las_thinned,hamraz2016())
+      segmented = try({segment_trees(las_thinned,hamraz2016())}, silent = TRUE)
+      
+      if(class(ttops) == "try-error") {
+        cat("Point cloud too poor for hamraz for", paste0(las_layer_name,"-",params_current$detection_params_name),"\n")
+        next()
+      }
       
       ttops_sf = segmented %>% 
         slot("data") %>% 
@@ -108,8 +136,11 @@ las_singlelas_allparams = function(las_layer_name, params) {
                  crs = proj4string(las))
     }
     
-    
-    
+    if(nrow(ttops_sf) == 0) {
+      cat("No trees detected in",paste0(las_layer_name,"-",params_current$detection_params_name),", skipping.\n")
+      next()
+    }
+
     ttops_sf = ttops_sf %>%
       rename(height = Z) %>%
       st_set_agr("constant") %>%
