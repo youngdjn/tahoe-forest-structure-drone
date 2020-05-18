@@ -36,7 +36,7 @@ get_closest_tree = function(ground_tree_index, ground_map, drone_map, dist_mat) 
   
   # thin to those within distance
   drone_map_candidates = drone_map_candidates %>%
-    filter(distance_to_ground_tree < search_distance)
+    filter(distance_to_ground_tree < search_distance_fun(ground_tree$Height))
   
   if(nrow(drone_map_candidates) == 0) return(ground_tree)
   
@@ -163,7 +163,7 @@ prep_data = function(ground_map, drone_map, reduced_area) {
   if(reduced_area) {
     ground_map_footprint = st_read(data("study_area_perimeter/smaller_project_mask.geojson")) %>% st_transform(st_crs(drone_map))
   } else {
-    ground_map_footprint = st_read(data("study_area_perimeter/ground_map_mask_precise.geojson")) %>% st_transform(st_crs(drone_map))
+      ground_map_footprint = st_read(data("study_area_perimeter/ground_map_mask_precise.geojson")) %>% st_transform(st_crs(drone_map))
   }
 
   drone_map = st_intersection(drone_map,ground_map_footprint %>% st_buffer(search_distance) )
@@ -444,7 +444,7 @@ match_compare_single = function(data_prepped, drone_map_name) {
   match_stats = match_stats %>%
     mutate_if(is.numeric, round, digits=2)
   
-  write_csv(match_stats, data(paste0("drone_map_evals/comparison_stats/individual/stats_", drone_map_name, ".csv")))
+  write_csv(match_stats, data(paste0("drone_map_evals/individual/stats_", drone_map_name, ".csv")))
   
   
   
@@ -458,13 +458,15 @@ match_compare_single = function(data_prepped, drone_map_name) {
 
 match_compare_single_wrapper = function(ground_map, drone_map_file) {
   
+  #cat("running for", drone_map_file, "\n")
+  
   ## get drone map name from filename
   parts = str_split(drone_map_file,"/")[[1]]
   filename = parts[length(parts)]
   drone_map_name = str_split(filename,"\\.")[[1]][1]
   
   ## what would the output file be? So that we can skip if it exists 
-  outfile = data(paste0("drone_map_evals/comparison_stats/individual/stats_", drone_map_name, ".csv"))
+  outfile = data(paste0("drone_map_evals/individual/stats_", drone_map_name, ".csv"))
   
   if(file.exists(outfile)) {  
     cat("Already exists:",outfile,". Skipping.\n")
@@ -490,6 +492,11 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   #### Filter drone map data to only trees within the height search distance of the smallest size category
   drone_map = drone_map %>%
     filter(height >= (smallest_size-smallest_size*search_height_proportion))
+  
+  if(nrow(drone_map) == 0) {
+    cat("Drone map", drone_map_file, "has zero trees after height filtering; skipping\n")
+    return(FALSE)
+  }
   
   #### Prep the maps by cropping etc
   data_prepped = prep_data(ground_map_new, drone_map, reduced_area = reduced_area)
