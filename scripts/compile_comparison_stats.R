@@ -2,7 +2,6 @@
 
 library(tidyverse)
 library(here)
-library(viridis)
 
 
 source(here("scripts/convenience_functions.R"))
