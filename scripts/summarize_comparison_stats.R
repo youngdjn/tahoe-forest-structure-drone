@@ -13,30 +13,133 @@ data_dir = readLines(here("data_dir.txt"), n=1)
 
 
 ## Load the config definitions
-config_files = list.files(data("parameter_set_definitions"), pattern="defs_.*\\.csv", full.names = TRUE)
+config_files = list.files(data("parameter_set_definitions"), pattern="best_las\\.csv|best_vwf_acrossSmooths012\\.csv", full.names = TRUE)
 
 configs = map_dfr(config_files, read_csv)
 
 
-
-
-
-stats_files = list.files(data("drone_map_evals/comparison_stats/individual"), pattern="\\.csv", full.names = TRUE)
+## Load the compiled comparison stats
+stats_files = list.files(data("drone_map_evals/compiled"), pattern="comparison_stats\\.csv", full.names = TRUE)
 
 ### Compile stats
-
 stats = map_dfr(stats_files, read_csv)
 
 ## Pull in config defs
 stats = stats %>%
   mutate(config_name = str_split(drone_map_name,"-") %>% map_chr(2)) %>%
-  mutate(chm_name = str_split(drone_map_name,"-") %>% map_chr(1))
+  mutate(metashape_layer_name = str_split(drone_map_name,"-") %>% map_chr(1)) %>%
+  mutate(metashape_run_name_pt1 = str_split(metashape_layer_name,"_") %>% map_chr(c(1))) %>%
+  mutate(metashape_run_name_pt2 = str_split(metashape_layer_name,"_") %>% map_chr(c(2))) %>%
+  mutate(metashape_run_name = paste(metashape_run_name_pt1,metashape_run_name_pt2, sep="_"))
 
-
-
-stats = left_join(stats, configs, by = c("config_name"="detection_params_name"))
+stats = left_join(stats, configs, by = c("config_name"="config_name"))
 
 stats = stats
+
+
+#### Make plot of f score for different metashape layers ####
+
+## Start with 20 m tall trees
+
+summ = stats %>%
+  filter(tree_position == "all",
+         height_cat == "10+") %>%
+  group_by(metashape_run_name) %>%
+  summarize(max_f = max(f_score, na.rm=TRUE)) %>%
+  mutate(flight = str_split(metashape_run_name,pattern="_") %>% map_chr(1) %>% str_sub(9,-1)) %>%
+  mutate(thin = str_split(metashape_run_name,pattern="_") %>% map_chr(2)) 
+
+
+### Check 14 to see if any of the different metashape processing params were better than the standard
+summ14 = summ %>%
+  filter(flight == "14"
+         )
+
+
+### rename some paramsets for plotting
+summ_95s = summ %>%
+  filter(flight %in% c("14","15","15a","26","27")) %>%
+  mutate(flight = recode(flight,
+                         "14" = "120m",
+                        "15" = "90m_someclouds",
+                      "15a" = "90m_noclouds",
+                       "26" = "120m_oblique",
+                      "27" = "90m_oblique")) %>%
+  filter(thin %in% c("01","02","03","04","05","06","07")) %>% ##!! EXPAND later to include more processing combos. Keeping it simple to start
+  mutate(thin = recode(thin,
+                       "01" = "95/95",
+                       "02" = "90/95",
+                       "03" = "95/90",
+                       "04" = "90/90",
+                       "05" = "80/90",
+                       "06" = "90/80",
+                       "07" = "80/80"))
+
+ggplot(summ_95s,aes(x=thin,y=max_f,color=flight)) +
+  geom_jitter(width = 0.1, height=0)
+
+
+### Try the "b" sets (obliques and low exposures)
+
+summ_95s_b_full = summ %>%
+  filter(flight %in% c("14b","15b","26b","27b")) %>%
+  filter(thin %in% c("01","02","03","04","05","06","07")) %>% ##!! EXPAND later to include more processing combos. Keeping it simple to start
+  mutate(thin = recode(thin,
+                       "01" = "95/95",
+                       "02" = "90/95",
+                       "03" = "95/90",
+                       "04" = "90/90",
+                       "05" = "80/90",
+                       "06" = "90/80",
+                       "07" = "80/80"))
+
+summ_95s_b_sparse = summ %>%
+  filter(flight %in% c("19b","20b")) %>%
+  filter(thin %in% c("01","02","03","04","05","06","07")) %>% ##!! EXPAND later to include more processing combos. Keeping it simple to start
+  mutate(thin = recode(thin,
+                       "01" = "90/90",
+                       "02" = "80/90",
+                       "03" = "90/80",
+                       "04" = "80/80"))
+
+summ_95s_b = bind_rows(summ_95s_b_full,summ_95s_b_sparse) %>%
+  mutate(flight = recode(flight,
+                       "14b" = "120m",
+                       "15b" = "90m",
+                       "26b" = "120m_oblique",
+                       "27b" = "90m_oblique",
+                       "19b" = "90m_lowexp",
+                       "20b" = "120m_lowexp"))
+
+
+ggplot(summ_95s_b,aes(x=thin,y=max_f,color=flight)) +
+  geom_jitter(width = 0.1, height=0)
+
+
+### Add some combo sets
+
+summ_combos = summ %>%
+  filter(flight %in% c("31","32","33")) %>%
+  filter(thin %in% c("52","53","55")) %>% ##!! EXPAND later to include more processing combos. Keeping it simple to start
+  mutate(thin = recode(thin,
+                       "53" = "95/95",
+                       "52" = "97/97",
+                       "55" = "92/92"))
+
+summ_solo_combo = bind_rows(summ_95s,summ_combos) %>%
+  mutate(flight = recode(flight,
+                         "14" = "120m",
+                         "15" = "90m_someclouds",
+                         "15a" = "90m_noclouds",
+                         "31" = "120m nadir + oblique",
+                         "32" = "90m nadir + oblique (some clouds)",
+                         "33" = "90m nadir + oblique (no clouds)"))
+
+ggplot(summ_solo_combo,aes(x=thin,y=max_f,color=flight)) +
+  geom_jitter(width = 0.2, height=0, size=3)
+
+
+##### OLD: FROM BEST PARAMSET SEARCH ########## 
 
 # ### Write
 # write_csv(stats,data("drone_map_evals/comparison_stats/compiled/vwf_best_param_search_results_compiled.csv"))
