@@ -45,9 +45,13 @@ summ = stats %>%
   filter(tree_position == "all",
          height_cat == "10+") %>%
   group_by(metashape_run_name) %>%
-  summarize(max_f = max(f_score, na.rm=TRUE)) %>%
+  summarize(max_f = max(f_score, na.rm=TRUE),
+            best_method = str_c(config_name[which(f_score == max(f_score,na.rm=TRUE))],collapse="," )) %>% # what are the best tree detection methods?
   mutate(flight = str_split(metashape_run_name,pattern="_") %>% map_chr(1) %>% str_sub(9,-1)) %>%
   mutate(thin = str_split(metashape_run_name,pattern="_") %>% map_chr(2)) 
+
+
+
 
 
 ### Check 14 to see if any of the different metashape processing params were better than the standard
