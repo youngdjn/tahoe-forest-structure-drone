@@ -21,6 +21,21 @@ tree_shifts = read_csv(data("reference_alignment_eval/tree_shift_dir_summary.csv
 ground_trees_orig = ground_trees_orig %>%
   filter(!(Plot == "B3.5" | Plot == "B3.5a" | (Plot == "Bx3.25" & data_col_location == 2) | Plot == "C1.5" | Plot == "D3.25" | Plot == "D3.5" | Plot == "Bx1.5" |  Plot == "B3.25") | Plot == "D3")
 
+#### Tangent: look at dbh-height relationship
+dbh = ground_trees_orig$DBH
+ht = ground_trees_orig$Height
+
+plot(dbh,ht)
+m = lm(dbh~ht)
+dbh_fun = function(x) {
+  return(2.392 + 2.066*x)
+}
+
+#### Tangent: proportion of trees that are pines
+trees_big = ground_trees_orig %>%
+  filter(DBH > 23)
+
+sum(trees_big$Species %in% c("PIPO","PIJE","PILA")) / nrow(trees_big)
 
 #### Shift trees ####
 
