@@ -81,7 +81,7 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets, paral
   #### Load data ####
   
   # find the dsm file in the metashape products direcotry
-  chm_files = list.files(data("metashape_products/chm"),pattern=chm_layer_name, full.names=TRUE)
+  chm_files = list.files(data("metashape_outputs_postprocessed/chm"),pattern=chm_layer_name, full.names=TRUE)
   if(length(chm_files) > 1) {
     
     cat("More than 1 matching CHM file in the specified metashape data products folder for",chm_layer_name,". Using most recent.\n") 
