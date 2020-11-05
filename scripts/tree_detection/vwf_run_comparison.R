@@ -22,7 +22,7 @@ source(here("scripts/tree_detection/vwf_functions.R"))
 
 ### Define parameter values to search: only need to run if set defs change
 
-params = read_csv(data("parameter_set_definitions/best_vwf_acrossSmooths012.csv"))
+params = read_csv(data("parameter_set_definitions/vwfdefs_fullrange.csv"))
 params$detection_params_name = paste0("vwf_",str_pad(1:nrow(params)+9000, width=4, pad = "0"))
 params$method = "vwf"
 
@@ -34,7 +34,7 @@ params$method = "vwf"
 manual_paramset_names = NULL
 # manual_paramset_names = c("paramset14_01","paramset14_02","paramset14_03")
 
-# read paramset from command line argument (otherwise use the hard-coded default above)
+# read paramset from command line argument (otherwise use the hard-coded default above, or use all paramsets via code below)
 command_args = commandArgs(trailingOnly=TRUE)
 
 if(length(command_args) == 0) {
@@ -42,7 +42,7 @@ if(length(command_args) == 0) {
     paramset_names = manual_paramset_names
   } else { # pull from directory
     
-    chm_files = list.files(data("metashape_products/chm"),pattern="chm\\.tif", full.names=TRUE)
+    chm_files = list.files(data("metashape_outputs_postprocessed/chm"),pattern="chm\\.tif", full.names=TRUE)
     
     # get all the filenames from before the date
     pieces = str_split(chm_files,"/")
