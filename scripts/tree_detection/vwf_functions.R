@@ -32,18 +32,6 @@ vwf_singlechm_singleparamset = function(chms, layer_name, a, b, c = 0, smooth, d
     chm = chms[["smooth1"]]
   } else if(smooth == 2) {
     chm = chms[["smooth2"]]
-  } else if(smooth == 3) {
-    chm = chms[["smooth3"]]
-  } else if(smooth == 4) {
-    chm = chms[["smooth4"]]
-  } else if(smooth == 5) {
-    chm = chms[["smooth5"]]
-  } else if(smooth == 6) {
-    chm = chms[["smooth6"]]
-  } else if(smooth == 7) {
-    chm = chms[["smooth7"]]
-  } else if(smooth == 8) {
-    chm = chms[["smooth8"]]
   } else {
     stop("Requested smoothed chm",smooth,"not provided.")
   }
@@ -133,56 +121,6 @@ vwf_singlechm_multiparamset = function(chm_layer_name, params = paramsets, paral
   if(2 %in% smooths) {
     weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
     chms[["smooth2"]] = focal(chm, weights, fun=mean)
-  }
-  
-  if(3 %in% smooths) {
-    weights = matrix(1,nrow=pixels_smooth_3,ncol=pixels_smooth_3)
-    chms[["smooth3"]] = focal(chm, weights, fun=mean)
-  }
-  
-  if(4 %in% smooths) {
-    weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
-    chms[["smooth4"]] = focal(chm, weights, fun=mean)
-  }
-  
-  if(5 %in% smooths) {
-    weights = matrix(1,nrow=pixels_smooth_1,ncol=pixels_smooth_1)
-    chm_smooth_5 = focal(chm, weights, fun=median)
-    #now smooth it slightly with a mean weighted primarily by the middle pixel
-    middle_pixel = ceiling(pixels_smooth_1/2)
-    weights[middle_pixel,middle_pixel] = 10*length(weights)
-    weights = weights/(mean(weights))
-    chms[["smooth5"]] = focal(chm_smooth_5, weights, fun=mean)
-  }
-  
-  if(6 %in% smooths) {
-    weights = matrix(1,nrow=pixels_smooth_2,ncol=pixels_smooth_2)
-    chm_smooth_6 = focal(chm, weights, fun=median)
-    #now smooth it slightly with a mean weighted primarily by the middle pixel
-    middle_pixel = ceiling(pixels_smooth_2/2)
-    weights[middle_pixel,middle_pixel] = 10*length(weights)
-    weights = weights/(mean(weights))
-    chms[["smooth6"]] = focal(chm_smooth_6, weights, fun=mean)
-  }
-  
-  if(7 %in% smooths) {
-    weights = matrix(1,nrow=pixels_smooth_3,ncol=pixels_smooth_3)
-    chm_smooth_7 = focal(chm, weights, fun=median)
-    #now smooth it slightly with a mean weighted primarily by the middle pixel
-    middle_pixel = ceiling(pixels_smooth_3/2)
-    weights[middle_pixel,middle_pixel] = 10*length(weights)
-    weights = weights/(mean(weights))
-    chms[["smooth7"]] = focal(chm_smooth_7, weights, fun=mean)
-  }
-  
-  if(8 %in% smooths) {
-    weights = matrix(1,nrow=pixels_smooth_4,ncol=pixels_smooth_4)
-    chm_smooth_8 = focal(chm, weights, fun=median)
-    #now smooth it slightly with a mean weighted primarily by the middle pixel
-    middle_pixel = ceiling(pixels_smooth_4/2)
-    weights[middle_pixel,middle_pixel] = 10*length(weights)
-    weights = weights/(mean(weights))
-    chms[["smooth8"]] = focal(chm_smooth_8, weights, fun=mean)
   }
   
   if(parallelize_params) {

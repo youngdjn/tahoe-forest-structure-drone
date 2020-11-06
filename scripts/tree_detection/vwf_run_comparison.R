@@ -23,10 +23,6 @@ source(here("scripts/tree_detection/vwf_functions.R"))
 ### Define parameter values to search: only need to run if set defs change
 
 params = read_csv(data("parameter_set_definitions/vwfdefs_fullrange.csv"))
-params$detection_params_name = paste0("vwf_",str_pad(1:nrow(params)+9000, width=4, pad = "0"))
-params$method = "vwf"
-
-
 
 # Run for multiple CHMs
 
