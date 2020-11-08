@@ -23,7 +23,8 @@ source(here("scripts/tree_detection/las_functions.R"))
 ### Define parameter values to search: only need to run if set defs change
 
 params = read_csv(data("parameter_set_definitions/best_las.csv"))
-params$detection_params_name = paste0("las_",str_pad(1:nrow(params)+9000, width=4, pad = "0"))
+# params$detection_params_name = paste0("las_",str_pad(1:nrow(params)+9000, width=4, pad = "0"))
+params$detection_params_name = params$config_name
 params$method_general = "las"
 
 
@@ -40,7 +41,7 @@ if(length(command_args) == 0) {
     paramset_names = manual_paramset_names
   } else { # pull from directory
     
-    las_files = list.files(data("metashape_products/las"),pattern="points\\.laz", full.names=TRUE)
+    las_files = list.files(data("metashape_outputs_postprocessed/las"),pattern="points\\.laz", full.names=TRUE)
     
     # get all the filenames from before the date
     pieces = str_split(las_files,"/")
@@ -67,5 +68,4 @@ options(lidR.progress = FALSE)
 options(future.globals.maxSize=5000*1024^2) # 5 GB
 plan(multiprocess)
   
-
 future_map(paramset_names,.f = las_singlelas_allparams, params = params, .options=future_options(scheduling=Inf))

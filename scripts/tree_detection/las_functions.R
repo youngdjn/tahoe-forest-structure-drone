@@ -10,7 +10,7 @@ las_singlelas_allparams = function(las_layer_name, params) {
   #### Load data ####
   
   # find the las file in the metashape products direcotry
-  las_files = list.files(data("metashape_products/las"),pattern=las_layer_name, full.names=TRUE)
+  las_files = list.files(data("metashape_outputs_postprocessed/las"),pattern=las_layer_name, full.names=TRUE)
   if(length(las_files) > 1) {
     
     cat("More than 1 matching LAS file in the specified metashape data products folder for",las_layer_name,". Using most recent.\n") 
