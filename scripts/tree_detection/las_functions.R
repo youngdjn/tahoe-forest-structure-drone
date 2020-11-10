@@ -42,7 +42,7 @@ las_singlelas_allparams = function(las_layer_name, params) {
   
   ## randomize the params so if multiple threads try this las file, they will do different las params
   params = params %>%
-    sample()
+    slice_sample(prop=1)
   
   ### Run all the tree detection algorithms
   
