@@ -40,6 +40,9 @@ las_singlelas_allparams = function(las_layer_name, params) {
   filename_noextension = str_split(filename,fixed(".")) %>% map(1) %>% unlist()
   las_layer_name = filename_noextension
   
+  ## randomize the params so if multiple threads try this las file, they will do different las params
+  params = params %>%
+    sample()
   
   ### Run all the tree detection algorithms
   
@@ -122,7 +125,7 @@ las_singlelas_allparams = function(las_layer_name, params) {
     
       segmented = try({segment_trees(las_thinned,hamraz2016())}, silent = TRUE)
       
-      if(class(ttops) == "try-error") {
+      if(class(segmented) == "try-error") {
         cat("Point cloud too poor for hamraz for", paste0(las_layer_name,"-",params_current$detection_params_name),"\n")
         next()
       }
