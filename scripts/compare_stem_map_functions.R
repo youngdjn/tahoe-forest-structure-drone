@@ -237,17 +237,17 @@ calc_match_stats = function(ground_map, drone_map) {
   match_stats = full_join(ground_drone_match_stats, drone_ground_match_stats, by = "height_cat")
   
   over10_match = match_stats %>%
-    filter(height_cat != "5-10") %>%
+    filter(height_cat != "0-5" & height_cat != "5-10") %>%
     summarize_at(vars(-height_cat),sum) %>%
     mutate(height_cat = "10+")
   
   over20_match = match_stats %>%
-    filter(height_cat != "5-10" & height_cat != "10-20") %>%
+    filter(height_cat != "0-5" & height_cat != "5-10" & height_cat != "10-20") %>%
     summarize_at(vars(-height_cat),sum) %>%
     mutate(height_cat = "20+")
   
   over30_match = match_stats %>%
-    filter(height_cat != "5-10" & height_cat != "10-20" & height_cat != "20-30") %>%
+    filter(height_cat != "0-5" & height_cat != "5-10" & height_cat != "10-20" & height_cat != "20-30") %>%
     summarize_at(vars(-height_cat),sum) %>%
     mutate(height_cat = "30+")
   
