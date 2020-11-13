@@ -176,7 +176,7 @@ prep_data = function(ground_map, drone_map, reduced_area) {
   # For each tree, are any of the trees within 3 m taller?
   
   ## distances between all trees
-  ground_trees_buffer = st_buffer(ground_map, 2)
+  ground_trees_buffer = st_buffer(ground_map, 3)
   tree_neighbors = st_intersects(ground_trees_buffer,ground_map)
   
   ## are any of the tree indexes in the list taller than the focal?
