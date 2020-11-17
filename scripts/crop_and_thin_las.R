@@ -26,15 +26,21 @@ focal_area = st_read(data("study_area_perimeter/ground_map_mask.geojson")) %>% s
 
 dtm = raster(data("dem_usgs/dem_usgs.tif")) %>% projectRaster(crs = "+proj=utm +zone=10 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
 
+cat("\nstarting disaggregation\n")
+# interpolate the the DEM to the same res as the finest CHMs (0.05 m)
+dtm_interp = disaggregate(dtm,fact=ceiling(10/0.05), method="bilinear") # starting res is 10 m
+cat("completed disaggregation\n")
+
+writeRaster(dtm_interp,data("dem_usgs/dem_usgs_interp.tif"))
 
 
 ## get las layers from metashape outputs directory
 las_files = list.files("/storage/forestuav/metashape_outputs/comparison_project",pattern=".*\\.las", full.names=TRUE)  # to filter to ones matching a name: pattern=paste0(las_layer_name,".*\\.las")
 
 ## Only process LAS files < 5 GB
-las_file_info = file.info(las_files)
-las_file_info$too_large = las_file_info$size > 5e+9
-las_files = las_files[!las_file_info$too_large]
+#las_file_info = file.info(las_files)
+#las_file_info$too_large = las_file_info$size > 5e+9
+#las_files = las_files[!las_file_info$too_large]
 
 crop_and_write_las = function(las_file) {
 
@@ -53,12 +59,13 @@ crop_and_write_las = function(las_file) {
     return(FALSE)
   }
 
+
   ## Read and clip las
   las = readLAS(las_file)
   las = clip_roi(las,focal_area)
   las = filter_duplicates(las)
   las = decimate_points(las, homogenize(50,.1))
-  las = normalize_elevation(las = las, algorithm = dtm, na.rm = TRUE)
+  las = normalize_elevation(las = las, algorithm = dtm_interp, na.rm = TRUE)
 
 
   writeLAS(las,filename)
