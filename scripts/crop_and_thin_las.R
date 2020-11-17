@@ -29,8 +29,9 @@ dtm = raster(data("dem_usgs/dem_usgs.tif")) %>% projectRaster(crs = "+proj=utm +
 ## Disaggregation of DEM
 
 # skip if file aleady exists
-if(file.exists(data("dem_usgs/dem_usgs_interp.tif"))) {
-  cat("Already exists:",filename,". Skipping.\n")
+dem_file = data("dem_usgs/dem_usgs_interp.tif")
+if(file.exists(dem_file)) {
+  cat("Already exists:",dem_file,". Skipping.\n")
 } else {
 
   cat("\nstarting disaggregation\n")
@@ -38,7 +39,7 @@ if(file.exists(data("dem_usgs/dem_usgs_interp.tif"))) {
   dtm_interp = disaggregate(dtm,fact=ceiling(10/0.05), method="bilinear") # starting res is 10 m
   cat("completed disaggregation\n")
   
-  writeRaster(dtm_interp,data("dem_usgs/dem_usgs_interp.tif"))
+  writeRaster(dtm_interp,dem_file)
 }
 
 
