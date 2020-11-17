@@ -26,12 +26,20 @@ focal_area = st_read(data("study_area_perimeter/ground_map_mask.geojson")) %>% s
 
 dtm = raster(data("dem_usgs/dem_usgs.tif")) %>% projectRaster(crs = "+proj=utm +zone=10 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
 
-cat("\nstarting disaggregation\n")
-# interpolate the the DEM to the same res as the finest CHMs (0.05 m)
-dtm_interp = disaggregate(dtm,fact=ceiling(10/0.05), method="bilinear") # starting res is 10 m
-cat("completed disaggregation\n")
+## Disaggregation of DEM
 
-writeRaster(dtm_interp,data("dem_usgs/dem_usgs_interp.tif"))
+# skip if file aleady exists
+if(file.exists(data("dem_usgs/dem_usgs_interp.tif"))) {
+  cat("Already exists:",filename,". Skipping.\n")
+} else {
+
+  cat("\nstarting disaggregation\n")
+  # interpolate the the DEM to the same res as the finest CHMs (0.05 m)
+  dtm_interp = disaggregate(dtm,fact=ceiling(10/0.05), method="bilinear") # starting res is 10 m
+  cat("completed disaggregation\n")
+  
+  writeRaster(dtm_interp,data("dem_usgs/dem_usgs_interp.tif"))
+}
 
 
 ## get las layers from metashape outputs directory
