@@ -31,7 +31,7 @@ dtm = raster(data("dem_usgs/dem_usgs.tif")) %>% projectRaster(crs = "+proj=utm +
 # skip if file aleady exists
 dem_file = data("dem_usgs/dem_usgs_interp.tif")
 if(file.exists(dem_file)) {
-  cat("Already exists:",dem_file,". Skipping.\n")
+  cat("Already exists:",dem_file,". Loading from already created.\n")
 } else {
 
   cat("\nstarting disaggregation\n")
@@ -42,6 +42,7 @@ if(file.exists(dem_file)) {
   writeRaster(dtm_interp,dem_file)
 }
 
+dtm_interp = raster(dem_file)
 
 ## get las layers from metashape outputs directory
 las_files = list.files("/storage/forestuav/metashape_outputs/comparison_project",pattern=".*\\.las", full.names=TRUE)  # to filter to ones matching a name: pattern=paste0(las_layer_name,".*\\.las")
