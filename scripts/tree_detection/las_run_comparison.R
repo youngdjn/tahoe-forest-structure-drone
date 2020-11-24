@@ -60,7 +60,7 @@ if(length(command_args) == 0) {
 }
 
 # Ramdomize paramset names so can run multiple parallel
-paramset_names = paramset_names %>% sample()
+paramset_names = paramset_names
 
 ### Run the search
 set_lidr_threads(1)
