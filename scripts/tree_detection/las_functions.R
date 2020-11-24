@@ -60,6 +60,7 @@ las_singlelas_allparams = function(las_layer_name, params) {
       next()
     }
     
+    print(paste0("Time:",Sys.time(),"\n"))
     cat("Starting tree detection for", paste0(las_layer_name,"-",params_current$detection_params_name),"\n")
     
     ### Thin the LAS as specified by the params

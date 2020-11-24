@@ -69,4 +69,8 @@ options(future.globals.maxSize=20000*1024^2) # 100 GB
 
 plan(multiprocess(workers=3))
   
-future_map(paramset_names,.f = las_singlelas_allparams, params = params, .options=future_options(scheduling=Inf))
+map(paramset_names,.f = las_singlelas_allparams, params = params)
+
+
+#future_
+# , .options=future_options(scheduling=Inf)
