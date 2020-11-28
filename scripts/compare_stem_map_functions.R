@@ -427,10 +427,18 @@ match_compare_single = function(data_prepped, drone_map_name) {
   match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
   match_stats_alltrees$tree_position = "all"
   
-  plot_stats = plot_based_comparison(prepped_ground = data_prepped$ground_map, prepped_drone = data_prepped$drone_map)
-  plot_stats$tree_position = "all"
+  ground_map_compared = compare_tree_maps(data_prepped$ground_map  %>% filter(under_neighbor == FALSE), data_prepped$drone_map)
+  match_stats_singletrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
+  match_stats_singletrees$tree_position = "single"
   
-  match_stats = match_stats_alltrees # used to also bring in individual trees here
+  plot_stats_alltrees = plot_based_comparison(prepped_ground = data_prepped$ground_map, prepped_drone = data_prepped$drone_map)
+  plot_stats_alltrees$tree_position = "all"
+  
+  plot_stats_singletrees = plot_based_comparison(prepped_ground = data_prepped$ground_map  %>% filter(under_neighbor == FALSE), prepped_drone = data_prepped$drone_map)
+  plot_stats_singletrees$tree_position = "single"
+  
+  match_stats = bind_rows(match_stats_alltrees, match_stats_singletrees)
+  plot_stats = bind_rows(plot_stats_alltrees, plot_stats_singletrees)
   
   match_stats = left_join(match_stats,plot_stats,by=c("height_cat","tree_position")) %>%
     select(tree_position, height_cat, everything())
