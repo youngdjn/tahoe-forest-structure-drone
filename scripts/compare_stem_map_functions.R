@@ -427,14 +427,10 @@ match_compare_single = function(data_prepped, drone_map_name) {
   match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
   match_stats_alltrees$tree_position = "all"
   
-  match_stats_singletrees = calc_match_stats(ground_map_compared %>% filter(under_neighbor == FALSE),data_prepped$drone_map)
-  match_stats_singletrees$tree_position = "single"
-  
   plot_stats = plot_based_comparison(prepped_ground = data_prepped$ground_map, prepped_drone = data_prepped$drone_map)
   plot_stats$tree_position = "all"
   
-  match_stats = bind_rows(match_stats_alltrees,
-                          match_stats_singletrees)
+  match_stats = match_stats_alltrees # used to also bring in individual trees here
   
   match_stats = left_join(match_stats,plot_stats,by=c("height_cat","tree_position")) %>%
     select(tree_position, height_cat, everything())
@@ -501,14 +497,14 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   #### Prep the maps by cropping etc
   data_prepped = prep_data(ground_map_new, drone_map, reduced_area = reduced_area)
   
-  ### If the drone map has > 3x as many trees as the ground map, or < 1/2, skip it
-  n_drone_trees = nrow(data_prepped$drone_map)
-  n_ground_trees = nrow(data_prepped$ground_map)
-  if((n_drone_trees > 3*n_ground_trees) | (n_drone_trees < 0.3*n_ground_trees)) {
+  ### Of the trees > 10 m tall, If the drone map has > 5x as many trees as the ground map, or < 1/10, skip it
+  n_drone_trees = nrow(data_prepped$drone_map %>% filter(height > 10))
+  n_ground_trees = nrow(data_prepped$ground_map %>% filter(Height > 10))
+  if((n_drone_trees > 5*n_ground_trees) | (n_drone_trees < 0.1*n_ground_trees)) {
     return(FALSE)
   }
   
-  ## Run compariston/eval ##
+  ## Run comparison/eval ##
   match_compare_single(data_prepped, drone_map_name = drone_map_name)
 
   return(TRUE)
