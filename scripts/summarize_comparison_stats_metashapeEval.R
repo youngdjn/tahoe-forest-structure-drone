@@ -38,8 +38,8 @@ stats = left_join(stats, configs, by = c("config_name"="config_name"))
 stats = stats %>%
   rename(photoset = metashape_run_name_pt1,
          metashape_config = metashape_run_name_pt2) %>%
-  mutate(metashape_config = as.numeric(metashape_config) %>% as.character %>% as.factor) %>%
-  mutate(metashape_config = factor(metashape_config,levels=1:36))
+  mutate(metashape_config = as.numeric(metashape_config) %>% as.factor) #%>%
+  #mutate(metashape_config = factor(metashape_config,levels=c(1:36)))
 
 
 
@@ -49,9 +49,9 @@ stats_summ = stats %>%
   filter(height_cat %in% c("10+","20+"),
          photoset != "paramset15a") %>%
   group_by(metashape_config,photoset, height_cat, tree_position) %>%
-  summarize(f_score = max(f_score),
-            height_cor = max(height_cor),
-            sensitivity = max(ifelse(f_score > (max(f_score-0.2)),sensitivity,0))) %>%
+  summarize(f_score = quantile(f_score,1),
+            height_cor = quantile(height_cor,1),
+            sensitivity = quantile(ifelse(f_score > (max(f_score-0.2)),sensitivity,0)),1) %>%
   pivot_longer(cols=c(f_score,height_cor,sensitivity), names_to="metric",values_to = "value") %>%
   mutate(height_position = paste(height_cat,tree_position,sep="_"))
 
@@ -102,9 +102,13 @@ ggarrange(p_a,p_b,p_c,ncol=1)
 
 
 
+### What is the best vwf set for metashape paramset 30 F score, averaged over all height cats?
 
-
-
+stats_foc = stats %>%
+  filter(metashape_config == 030,
+         height_cat %in% c("10+","20+")) %>%
+  group_by(config_name) %>%
+  summarize(mean_f = mean(f_score))
 
 
 
