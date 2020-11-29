@@ -172,9 +172,20 @@ prep_data = function(ground_map, drone_map, reduced_area) {
   ground_map_footprint_bufferin = ground_map_footprint %>% st_buffer(-search_distance)
   drone_map$internal_area = st_intersects(drone_map,ground_map_footprint_bufferin, sparse=FALSE)
   
+  # Need a label to know if ground map trees were within the focal polygon
+  #ground_map_footprint_bufferin = ground_map_footprint %>% st_buffer(-search_distance)
+  ground_map$internal_area = st_intersects(ground_map,ground_map_footprint, sparse=FALSE)
+  
   return(list(ground_map = ground_map, drone_map = drone_map))
 }
 
+
+
+get_slope = function(y,x) {
+  m = lm(y~x)
+  slope = coef(m)[2]
+  return(slope)
+}
 
 
 #### Compute correspondence statistics ####
@@ -187,9 +198,13 @@ prep_data = function(ground_map, drone_map, reduced_area) {
 calc_match_stats = function(ground_map, drone_map) {
   
   ground_map_simple = ground_map %>%
-    select(ground_tree_id, final_drone_map_match_id, ground_tree_height = Height)
+    select(ground_tree_id, final_drone_map_match_id, ground_tree_height = Height, ground_tree_internal_area = internal_area) %>%
+    mutate(ground_tree_internal_area = as.vector(ground_tree_internal_area))
   drone_map_simple = drone_map %>%
-    select(drone_tree_id, drone_tree_height = height, drone_tree_internal_area = internal_area)
+    select(drone_tree_id, drone_tree_height = height, drone_tree_internal_area = internal_area) %>%
+    mutate(drone_tree_internal_area = as.vector(drone_tree_internal_area))
+
+  
   st_geometry(ground_map_simple) = NULL
   st_geometry(drone_map_simple) = NULL
   drone_ground_match = left_join(drone_map_simple, ground_map_simple, by = c("drone_tree_id"="final_drone_map_match_id"))
@@ -197,6 +212,7 @@ calc_match_stats = function(ground_map, drone_map) {
   
   ## Counts of ground trees trees matched to drone trees, by size classes
   ground_drone_match = ground_drone_match %>%
+    filter(ground_tree_internal_area == TRUE) %>% # make sure it's internal to the buffer of ground trees
     mutate(height_cat = cut(ground_tree_height,breaks = c(-Inf,5,10,20,30,40,Inf), labels = c("0-5","5-10","10-20","20-30","30-40","40+")))
   
   drone_ground_match = drone_ground_match %>%
@@ -248,7 +264,8 @@ calc_match_stats = function(ground_map, drone_map) {
               height_bias = mean(height_err),
               height_mean_ground = mean(ground_tree_height),
               height_mean_drone = mean(drone_tree_height),
-              height_cor = cor(ground_tree_height,drone_tree_height)) %>%
+              height_cor = cor(ground_tree_height,drone_tree_height),
+              height_slope = get_slope(ground_tree_height,drone_tree_height)) %>%
     mutate(height_cat = "10+")
   
   over20trees = trees_matched %>%
@@ -257,7 +274,8 @@ calc_match_stats = function(ground_map, drone_map) {
               height_bias = mean(height_err),
               height_mean_ground = mean(ground_tree_height),
               height_mean_drone = mean(drone_tree_height),
-              height_cor = cor(ground_tree_height,drone_tree_height)) %>%
+              height_cor = cor(ground_tree_height,drone_tree_height),
+              height_slope = get_slope(ground_tree_height,drone_tree_height)) %>%
     mutate(height_cat = "20+")
   
   over30trees = trees_matched %>%
@@ -266,7 +284,8 @@ calc_match_stats = function(ground_map, drone_map) {
               height_bias = mean(height_err),
               height_mean_ground = mean(ground_tree_height),
               height_mean_drone = mean(drone_tree_height),
-              height_cor = cor(ground_tree_height,drone_tree_height)) %>%
+              height_cor = cor(ground_tree_height,drone_tree_height),
+              height_slope = get_slope(ground_tree_height,drone_tree_height)) %>%
     mutate(height_cat = "30+")
   
   over40trees = trees_matched %>%
@@ -275,14 +294,14 @@ calc_match_stats = function(ground_map, drone_map) {
               height_bias = mean(height_err),
               height_mean_ground = mean(ground_tree_height),
               height_mean_drone = mean(drone_tree_height),
-              height_cor = cor(ground_tree_height,drone_tree_height)) %>%
+              height_cor = cor(ground_tree_height,drone_tree_height),
+              height_slope = get_slope(ground_tree_height,drone_tree_height)) %>%
     mutate(height_cat = "40+")
   
   height_stats = bind_rows(over10trees,over20trees,over30trees,over40trees) %>%
     mutate(height_mae_percent = height_mae / height_mean_ground)
   
-  
-  
+
   
   match_stats = match_stats %>%
     mutate(sensitivity = n_ground_matched_drone/n_ground,
@@ -407,14 +426,14 @@ match_compare_single = function(data_prepped, drone_map_name) {
   match_stats_alltrees$tree_position = "all"
   
   ## make a shapefile of lines connecting the drone-ground tree pairs
-  make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_all"))
+  #make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_all"))
   
   ground_map_compared = compare_tree_maps(data_prepped$ground_map  %>% filter(under_neighbor == FALSE), data_prepped$drone_map)
   match_stats_singletrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
   match_stats_singletrees$tree_position = "single"
   
   ## make a shapefile of lines connecting the drone-ground tree pairs
-  make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_single"))
+  #make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_single"))
   
   plot_stats_alltrees = plot_based_comparison(prepped_ground = data_prepped$ground_map, prepped_drone = data_prepped$drone_map)
   plot_stats_alltrees$tree_position = "all"
