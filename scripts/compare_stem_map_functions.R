@@ -169,12 +169,11 @@ prep_data = function(ground_map, drone_map, reduced_area) {
   drone_map = st_intersection(drone_map,ground_map_footprint %>% st_buffer(search_distance) )
   
   # Need a label to know if drone map trees were part of a buffered-in polygon
-  ground_map_footprint_bufferin = ground_map_footprint %>% st_buffer(-search_distance)
+  ground_map_footprint_bufferin = ground_map_footprint %>% st_buffer(-search_distance*2)
   drone_map$internal_area = st_intersects(drone_map,ground_map_footprint_bufferin, sparse=FALSE)
   
   # Need a label to know if ground map trees were within the focal polygon
-  #ground_map_footprint_bufferin = ground_map_footprint %>% st_buffer(-search_distance)
-  ground_map$internal_area = st_intersects(ground_map,ground_map_footprint, sparse=FALSE)
+  ground_map$internal_area = st_intersects(ground_map,ground_map_footprint_bufferin, sparse=FALSE)
   
   return(list(ground_map = ground_map, drone_map = drone_map))
 }
