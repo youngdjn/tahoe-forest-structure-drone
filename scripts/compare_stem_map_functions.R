@@ -172,27 +172,6 @@ prep_data = function(ground_map, drone_map, reduced_area) {
   ground_map_footprint_bufferin = ground_map_footprint %>% st_buffer(-search_distance)
   drone_map$internal_area = st_intersects(drone_map,ground_map_footprint_bufferin, sparse=FALSE)
   
-  ## Tag for ground trees to know if they are under another ground tree
-  # For each tree, are any of the trees within 3 m taller?
-  
-  ## distances between all trees
-  ground_trees_buffer = st_buffer(ground_map, 5)
-  tree_neighbors = st_intersects(ground_trees_buffer,ground_map)
-  
-  ## are any of the tree indexes in the list taller than the focal?
-  any_taller = function(i, tree_neighbors, ground_map) {
-    
-    focal_height = ground_map[i,]$Height
-    other_trees = tree_neighbors[[i]] %>% setdiff(i)
-    neighbors_max_height = ground_map[other_trees,]$Height %>% max
-    neighbor_taller = neighbors_max_height > focal_height
-    
-    return(neighbor_taller)
-    
-  }
-  
-  ground_map$under_neighbor = map_lgl(1:nrow(ground_map), any_taller, tree_neighbors = tree_neighbors, ground_map = ground_map)
-
   return(list(ground_map = ground_map, drone_map = drone_map))
 }
 
@@ -427,9 +406,15 @@ match_compare_single = function(data_prepped, drone_map_name) {
   match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
   match_stats_alltrees$tree_position = "all"
   
+  ## make a shapefile of lines connecting the drone-ground tree pairs
+  make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_all"))
+  
   ground_map_compared = compare_tree_maps(data_prepped$ground_map  %>% filter(under_neighbor == FALSE), data_prepped$drone_map)
   match_stats_singletrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
   match_stats_singletrees$tree_position = "single"
+  
+  ## make a shapefile of lines connecting the drone-ground tree pairs
+  make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_single"))
   
   plot_stats_alltrees = plot_based_comparison(prepped_ground = data_prepped$ground_map, prepped_drone = data_prepped$drone_map)
   plot_stats_alltrees$tree_position = "all"
@@ -452,8 +437,7 @@ match_compare_single = function(data_prepped, drone_map_name) {
   
   
   
-  ## make a shapefile of lines connecting the drone-ground tree pairs
-  #make_lines_between_matches(ground_map_compared, data_prepped$drone_map, drone_map_name)
+
 
 }
 
@@ -503,7 +487,7 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   }
   
   #### Prep the maps by cropping etc
-  data_prepped = prep_data(ground_map_new, drone_map, reduced_area = reduced_area)
+  data_prepped = prep_data(ground_map_new, drone_map, reduced_area = reduced_area) # takes about 1 min
   
   ### Of the trees > 10 m tall, If the drone map has > 5x as many trees as the ground map, or < 1/10, skip it
   n_drone_trees = nrow(data_prepped$drone_map %>% filter(height > 10))
