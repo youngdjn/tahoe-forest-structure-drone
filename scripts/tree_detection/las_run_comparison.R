@@ -67,7 +67,7 @@ set_lidr_threads(1)
 options(lidR.progress = FALSE)
 options(future.globals.maxSize=20000*1024^2) # 100 GB
 
-plan(multiprocess())
+plan("multiprocess")
   
 future_map(paramset_names,.f = las_singlelas_allparams, params = params , .options=future_options(scheduling=Inf))
 
