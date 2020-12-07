@@ -52,28 +52,28 @@ man = stats %>%
          tree_position == "single",
          height_cat == "20+")
 
-
-## Temporary: all metashape 14_028 remove, replace with 14_228
-
-stats = stats %>%
-  filter(metashape_run_name != "paramset14_028")
-
-stats[stats$metashape_run_name == "paramset14_228",c("metashape_config")] = 28
-stats[stats$metashape_run_name == "paramset14_228",c("metashape_run_name")] = "paramset14_028"
-
-
-stats = stats %>%
-  filter(metashape_run_name != "paramset14_032")
-
-stats[stats$metashape_run_name == "paramset14_232",c("metashape_config")] = 32
-stats[stats$metashape_run_name == "paramset14_232",c("metashape_run_name")] = "paramset14_0328"
-
-
-stats = stats %>%
-  filter(metashape_run_name != "paramset15_028")
-
-stats[stats$metashape_run_name == "paramset15_228",c("metashape_config")] = 28
-stats[stats$metashape_run_name == "paramset15_228",c("metashape_run_name")] = "paramset15_028"
+# 
+# ## Temporary: all metashape 14_028 remove, replace with 14_228
+# 
+# stats = stats %>%
+#   filter(metashape_run_name != "paramset14_028")
+# 
+# stats[stats$metashape_run_name == "paramset14_228",c("metashape_config")] = 28
+# stats[stats$metashape_run_name == "paramset14_228",c("metashape_run_name")] = "paramset14_028"
+# 
+# 
+# stats = stats %>%
+#   filter(metashape_run_name != "paramset14_032")
+# 
+# stats[stats$metashape_run_name == "paramset14_232",c("metashape_config")] = 32
+# stats[stats$metashape_run_name == "paramset14_232",c("metashape_run_name")] = "paramset14_0328"
+# 
+# 
+# stats = stats %>%
+#   filter(metashape_run_name != "paramset15_028")
+# 
+# stats[stats$metashape_run_name == "paramset15_228",c("metashape_config")] = 28
+# stats[stats$metashape_run_name == "paramset15_228",c("metashape_run_name")] = "paramset15_028"
 
 
 #### Get the best metashape paramsets for 10 m tree height, F score
@@ -265,7 +265,7 @@ stats_for_treedet = left_join(stats_for_treedet, stats_summ_foc, by=c("height_ca
 
 ## Select focal Metashape parameter sets, tree heights, etc ##
 stats_main = stats_for_treedet %>%
-  filter(metashape_config %in% c(15, 30, 32, 34, 532)) %>%
+  filter(metashape_config %in% c(15, 29, 32, 34, 532)) %>%
   filter(height_cat %in% c("10+","20+")) %>%
   filter(photoset %in% c("paramset15","paramset14"))
 
@@ -288,7 +288,7 @@ height_cats = c("10+","20+")
 tree_positions = c("single","all")
 photosets = c("paramset14","paramset15")
 metrics = c("f_score","sensitivity") #,"sensitivity"
-metashape_configs = c(15, 30, 32, 34, 532)
+metashape_configs = c(15, 29, 32, 34, 532)
 
 categories = expand.grid(height_cat = height_cats, tree_position = tree_positions,photoset = photosets,metric = metrics, metashape_config = metashape_configs)
 
@@ -350,7 +350,7 @@ selected_cfgs
 
 
 ## Metashape configs selected
-# c(15, 30, 32, 34, 530, 532, 534)
+# c(15,29, 32, 34, 530, 532, 534)
 
 ## Tree detection sets selected
 # c("vwf_196", "vwf_186", "vwf_197", "vwf_131", "vwf_188", "vwf_120", "vwf_055", "vwf_110", "vwf_045")
