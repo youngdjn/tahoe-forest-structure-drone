@@ -38,22 +38,73 @@ stats = left_join(stats, configs, by = c("config_name"="config_name"))
 stats = stats %>%
   rename(photoset = metashape_run_name_pt1,
          metashape_config = metashape_run_name_pt2) %>%
-  mutate(metashape_config = as.numeric(metashape_config) %>% as.factor) #%>%
+  mutate(metashape_config = as.numeric(metashape_config)) #%>%
   #mutate(metashape_config = factor(metashape_config,levels=c(1:36)))
 
+## make sure the stats are unique
+stats_count_unique = stats %>%
+  group_by(config_name,photoset,metashape_config,tree_position,height_cat) %>%
+  summarize(n = n())
+
+## manual checking for best
+man = stats %>%
+  filter(metashape_config == 31,
+         tree_position == "single",
+         height_cat == "20+")
+
+
+## Temporary: all metashape 14_028 remove, replace with 14_228
+
+stats = stats %>%
+  filter(metashape_run_name != "paramset14_028")
+
+stats[stats$metashape_run_name == "paramset14_228",c("metashape_config")] = 28
+stats[stats$metashape_run_name == "paramset14_228",c("metashape_run_name")] = "paramset14_028"
+
+
+stats = stats %>%
+  filter(metashape_run_name != "paramset14_032")
+
+stats[stats$metashape_run_name == "paramset14_232",c("metashape_config")] = 32
+stats[stats$metashape_run_name == "paramset14_232",c("metashape_run_name")] = "paramset14_0328"
+
+
+stats = stats %>%
+  filter(metashape_run_name != "paramset15_028")
+
+stats[stats$metashape_run_name == "paramset15_228",c("metashape_config")] = 28
+stats[stats$metashape_run_name == "paramset15_228",c("metashape_run_name")] = "paramset15_028"
 
 
 #### Get the best metashape paramsets for 10 m tree height, F score
 
-stats_summ = stats %>%
+
+stats_summ_pre = stats %>%
   filter(height_cat %in% c("10+","20+"),
          photoset != "paramset15a") %>%
   group_by(metashape_config,photoset, height_cat, tree_position) %>%
-  summarize(f_score = quantile(f_score,1),
-            height_cor = quantile(height_cor,1),
-            sensitivity = quantile(ifelse(f_score > (max(f_score-0.2)),sensitivity,0)),1) %>%
-  pivot_longer(cols=c(f_score,height_cor,sensitivity), names_to="metric",values_to = "value") %>%
-  mutate(height_position = paste(height_cat,tree_position,sep="_"))
+  summarize(sens_config = config_name[which(sensitivity == quantile(ifelse(f_score > (max(f_score-0.2)),sensitivity,0),1))][1], ## in the future, need to slect the config with best F score if multiple have sens == 1
+            sensitivity = quantile(ifelse(f_score > (max(f_score-0.2)),sensitivity,0),1),
+            f_config = config_name[which(f_score == quantile(f_score,1))][1],
+            f_score = quantile(f_score,1),
+            height_config = config_name[which(height_cor == quantile(height_cor,1))][1],
+            height_cor = quantile(height_cor,1))
+
+
+stats_summ_scores = stats_summ_pre %>%
+  select(-f_config, -height_config, -sens_config) %>%
+  pivot_longer(cols=c(f_score,height_cor,sensitivity), names_to="metric",values_to = "value")
+
+stats_summ_configs = stats_summ_pre %>%
+  select(-f_score,-height_cor,-sensitivity) %>%
+  rename(f_score = f_config, height_cor = height_config, sensitivity = sens_config) %>%
+  pivot_longer(cols=c(f_score,height_cor,sensitivity), names_to="metric",values_to = "config")
+
+
+stats_summ = left_join(stats_summ_scores,stats_summ_configs,by=c("metashape_config","photoset","height_cat","tree_position","metric")) %>%
+  mutate(height_position = paste(height_cat,tree_position,sep="_")) %>%
+  mutate(cfg_num = str_split(config,pattern=fixed("_")) %>% map(2))%>%
+  mutate(metashape_config = as.factor(metashape_config))
 
 
 # %>%
@@ -65,10 +116,13 @@ stats_summ = stats %>%
 ### F-score plot
 
 d_plot = stats_summ %>%
+  #filter(metashape_config %in% c(2,8,30,32, 532, 632)) %>% ##!! optional filtering to best sets
   filter(metric == "f_score")
+
 
 p_a = ggplot(d_plot,aes(y=height_position,x=metashape_config,fill=value)) +
   geom_tile() +
+  geom_text(aes(label=cfg_num), size=2) +
   facet_grid(photoset~.) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_viridis()
@@ -77,10 +131,12 @@ p_a = ggplot(d_plot,aes(y=height_position,x=metashape_config,fill=value)) +
 ### Height-cor plot
 
 d_plot = stats_summ %>%
+  #filter(metashape_config %in% c(2,8,30,32, 532, 632)) %>% ##!! optional filtering to best sets
   filter(metric == "height_cor")
 
 p_b = ggplot(d_plot,aes(y=height_position,x=metashape_config,fill=value)) +
   geom_tile() +
+  geom_text(aes(label=cfg_num), size=2) +
   facet_grid(photoset~.) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_viridis()
@@ -89,10 +145,12 @@ p_b = ggplot(d_plot,aes(y=height_position,x=metashape_config,fill=value)) +
 ### Sens plot
 
 d_plot = stats_summ %>%
+  #filter(metashape_config %in% c(2,8,30,32, 532, 632)) %>% ##!! optional filtering to best sets
   filter(metric == "sensitivity")
 
 p_c = ggplot(d_plot,aes(y=height_position,x=metashape_config,fill=value)) +
   geom_tile() +
+  geom_text(aes(label=cfg_num), size=2) +
   facet_grid(photoset~.) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_viridis()
@@ -100,290 +158,220 @@ p_c = ggplot(d_plot,aes(y=height_position,x=metashape_config,fill=value)) +
 ggarrange(p_a,p_b,p_c,ncol=1)
 
 
+#### Find best Metashape paramsets ####
 
+stats
 
-### What is the best vwf set for metashape paramset 30 F score, averaged over all height cats?
+# ## For each cell of F and Sens, rank tree detection params and keep top 10%.
+# 
+# stats = stats %>%
+#   mutate(phot_ht_pos_met = paste(photoset, height_cat, tree_position, metashape_config,sep="-"))
 
-stats_foc = stats %>%
-  filter(metashape_config == 030,
-         height_cat %in% c("10+","20+")) %>%
-  group_by(config_name) %>%
-  summarize(mean_f = mean(f_score))
+#### Select best Metashape parameter sets ####
 
+stats_summ_main = stats_summ %>%
+  filter(metashape_config %in% 1:36)
 
+### For each height cat and photoset (F and sens), get all sets which are within 5% of the best
 
+height_positions = c("10+_single","10+_all","20+_single","20+_all")
+photosets = c("paramset14","paramset15")
+metrics = c("f_score") # ,"sensitivity"
 
+categories = expand.grid(height_position = height_positions,photoset = photosets,metric = metrics)
 
+good_cfgs = list()
 
-
-#### Make plot of f score for different metashape layers ####
-
-## Start with 20 m tall trees
-
-summ = stats %>%
-  filter(tree_position == "all",
-         height_cat == "10+") %>%
-  group_by(metashape_run_name) %>%
-  summarize(max_f = max(f_score, na.rm=TRUE),
-            best_method = str_c(config_name[which(f_score == max(f_score,na.rm=TRUE))],collapse="," )) %>% # what are the best tree detection methods?
-  mutate(flight = str_split(metashape_run_name,pattern="_") %>% map_chr(1) %>% str_sub(9,-1)) %>%
-  mutate(thin = str_split(metashape_run_name,pattern="_") %>% map_chr(2)) 
-
-
-
-
-
-### Check 14 to see if any of the different metashape processing params were better than the standard
-summ14 = summ %>%
-  filter(flight == "14"
-         )
-
-
-### rename some paramsets for plotting
-summ_95s = summ %>%
-  filter(flight %in% c("14","15","15a","26","27")) %>%
-  mutate(flight = recode(flight,
-                         "14" = "120m",
-                        "15" = "90m_someclouds",
-                      "15a" = "90m_noclouds",
-                       "26" = "120m_oblique",
-                      "27" = "90m_oblique")) %>%
-  filter(thin %in% c("01","02","03","04","05","06","07")) %>% ##!! EXPAND later to include more processing combos. Keeping it simple to start
-  mutate(thin = recode(thin,
-                       "01" = "95/95",
-                       "02" = "90/95",
-                       "03" = "95/90",
-                       "04" = "90/90",
-                       "05" = "80/90",
-                       "06" = "90/80",
-                       "07" = "80/80"))
-
-ggplot(summ_95s,aes(x=thin,y=max_f,color=flight)) +
-  geom_jitter(width = 0.1, height=0)
-
-
-### Try the "b" sets (obliques and low exposures)
-
-summ_95s_b_full = summ %>%
-  filter(flight %in% c("14b","15b","26b","27b")) %>%
-  filter(thin %in% c("01","02","03","04","05","06","07")) %>% ##!! EXPAND later to include more processing combos. Keeping it simple to start
-  mutate(thin = recode(thin,
-                       "01" = "95/95",
-                       "02" = "90/95",
-                       "03" = "95/90",
-                       "04" = "90/90",
-                       "05" = "80/90",
-                       "06" = "90/80",
-                       "07" = "80/80"))
-
-summ_95s_b_sparse = summ %>%
-  filter(flight %in% c("19b","20b")) %>%
-  filter(thin %in% c("01","02","03","04","05","06","07")) %>% ##!! EXPAND later to include more processing combos. Keeping it simple to start
-  mutate(thin = recode(thin,
-                       "01" = "90/90",
-                       "02" = "80/90",
-                       "03" = "90/80",
-                       "04" = "80/80"))
-
-summ_95s_b = bind_rows(summ_95s_b_full,summ_95s_b_sparse) %>%
-  mutate(flight = recode(flight,
-                       "14b" = "120m",
-                       "15b" = "90m",
-                       "26b" = "120m_oblique",
-                       "27b" = "90m_oblique",
-                       "19b" = "90m_lowexp",
-                       "20b" = "120m_lowexp"))
-
-
-ggplot(summ_95s_b,aes(x=thin,y=max_f,color=flight)) +
-  geom_jitter(width = 0.1, height=0)
-
-
-### Add some combo sets
-
-summ_combos = summ %>%
-  filter(flight %in% c("31","32","33")) %>%
-  filter(thin %in% c("52","53","55")) %>% ##!! EXPAND later to include more processing combos. Keeping it simple to start
-  mutate(thin = recode(thin,
-                       "53" = "95/95",
-                       "52" = "97/97",
-                       "55" = "92/92"))
-
-summ_solo_combo = bind_rows(summ_95s,summ_combos) %>%
-  mutate(flight = recode(flight,
-                         "14" = "120m",
-                         "15" = "90m_someclouds",
-                         "15a" = "90m_noclouds",
-                         "31" = "120m nadir + oblique",
-                         "32" = "90m nadir + oblique (some clouds)",
-                         "33" = "90m nadir + oblique (no clouds)"))
-
-ggplot(summ_solo_combo,aes(x=thin,y=max_f,color=flight)) +
-  geom_jitter(width = 0.2, height=0, size=3)
-
-
-##### OLD: FROM BEST PARAMSET SEARCH ########## 
-
-# ### Write
-# write_csv(stats,data("drone_map_evals/comparison_stats/compiled/vwf_best_param_search_results_compiled.csv"))
-
-
-### Arrange for inspection
-
-stats = stats %>%
-  arrange(tree_position, height_cat, -f_score)
-
-stats = stats %>%
-  arrange(tree_position, height_cat, mean_abs_err)
-
-
-#### Get best params in multiple cats ####
-
-# for smooth 0,1,2
-# tree position, height, smooth
-# best by: f_score, height_mae, height_bias, height_cor, mean_abs_err, mean_bias, correlation, mean_abs_err_pct
-
-## variables to get the best methods for
-varnames = c("f_score","height_mae","mean_abs_err","correlation")
-
-stats_prep = stats %>%
-  mutate(meight_mae = -height_mae,
-         mean_abs_err = -mean_abs_err)
-
-full_best_configs = data.frame()
-
-for(i in 1:length(varnames)) {
-
-  varname = varnames[i]
+for(i in 1:nrow(categories)) {
   
+  category = categories[i,]
   
+  stats_summ_foc = stats_summ_main %>%
+    filter(height_position == category$height_position,
+           photoset == category$photoset,
+           metric == category$metric)
   
-  best_configs = stats_prep %>%
-    mutate(c = ifelse(is.na(c),0,c)) %>%
-    filter(smooth %in% c(0,1,2),
-           tree_position == "all",
-           height_cat != "40+") %>%
-    distinct(height_cat,smooth,!!rlang::sym(varname),a,b,c, .keep_all=TRUE) %>%
-    group_by(height_cat, smooth, c) %>%
-    filter(!!rlang::sym(varname) == max(!!rlang::sym(varname))) %>%
-    arrange(height_cat, smooth) %>%
-    select(height_cat,smooth,!!rlang::sym(varname),config_name,a,b,c,everything()) %>%
-    ungroup() %>%
-    group_by(height_cat, smooth) %>%
-    filter(!!rlang::sym(varname) == max(!!rlang::sym(varname)) | c == 0) ## only keep the ones that max the f_score OR where c == 0
+  max = max(stats_summ_foc$value)
   
-  
-  
-  ### if there are multiple configs of the same smooth and height cat and f_score, and there are ones where c == 0 or NA, only keep those
-  
-  # Get number of configs of each height cat, smooth, and f_score
-  same = best_configs %>%
-    group_by(height_cat, smooth, !!rlang::sym(varname)) %>%
-    summarize(count = n()) %>%
-    filter(count > 1) %>%
-    ungroup()
-  
-  
-  for(i in 1:nrow(same)) {
-    
-    same_row = same[i,]
-    
-    ## are there ones where c == 0 and c == 1
-    
-    matching_configs = best_configs %>%
-      filter(height_cat == same_row$height_cat &
-             smooth == same_row$smooth &
-             !!rlang::sym(varname) == as.numeric(same_row[,varname]))
-    
-    configs_c_counts = matching_configs %>%
-      mutate(c = ifelse(c == 0,0,100)) %>%
-      group_by(c) %>%
-      summarize(c_count = n()) %>%
-      filter(c_count > 1)
-    
-    if(nrow(configs_c_counts) > 1) { # there is c== 0 and c != 0
-      best_configs = best_configs %>%
-        filter(!(smooth == same_row$smooth & height_cat == same_row$height_cat & !!rlang::sym(varname) == as.numeric(same_row[,varname]) & c!= 0))
-    }
-   
+  if(category$metric == "f_score")  {
+    min = max - 0.01
+  } else {
+    min = max - 0.02
   }
   
-  full_best_configs = bind_rows(full_best_configs,best_configs)
+  good = stats_summ_foc[stats_summ_foc$value >= min,"metashape_config"] %>% pull() %>% as.character %>% as.numeric 
+  
+  good_cfgs[[i]] = good
 
 }
 
-full_best_configs = full_best_configs %>%
-  arrange(config_name,height_cat,smooth)
+## Select the config found in the most categories
+## Which categories still need to be satisfied?
+## Of the configs from those categories, which are the most common across all categories?
+## Select that one
 
-best_vwf_params = full_best_configs %>%
-  select(a,b,c) %>%
-  distinct()
 
-best_vwf_params_smooth1only = full_best_configs %>%
-  filter(smooth == 0) %>%
-  select(a,b,c) %>%
-  distinct()
+# Convenience function: which cats still need to be satisfied by selecting a config for them?
+satisfied_cat = function(selected_cfgs, good_cfgs) {
+  satisfied = NULL
+  for(i in 1:length(good_cfgs)) {
+    incommon = (intersect(good_cfgs[i] %>% unlist(),selected_cfgs) %>% length) > 0
+    satisfied = c(satisfied,incommon)
+  }
+  return(satisfied)
+}
+
+selected_cfgs = NULL
+
+all_cfgs_byfrequency = table(unlist(good_cfgs)) %>% sort(decreasing=TRUE) %>% names
+
+cats_satisfied = satisfied_cat(selected_cfgs, good_cfgs)
+
+while(sum(!cats_satisfied) > 0 ) {
+  #which cats still need to be satisfied
+  cats_satisfied = satisfied_cat(selected_cfgs, good_cfgs)
+  #get the configs from the unsatisfied cats
+  cfgs_from_unsatisfied = good_cfgs[which(!cats_satisfied)] %>% unlist %>% unique
+  # of those configs, which is the most common across all cats (even satisfied ones)
+  next_cfg = intersect(all_cfgs_byfrequency,cfgs_from_unsatisfied)[1]
+  selected_cfgs = c(selected_cfgs,next_cfg)
+}
+
+selected_cfgs
+
+
+
+
+
+
+#### Get the best tree detection params ####
+### Across F and Sens, photosets, height cats
+
+stats
+
+###!!! within each height cat and config and photoset, need to remove the tree detection sets which get a F more than 0.2 less than the best F
+## pull in the best
+
+stats_for_treedet = stats %>%
+  select(height_cat,tree_position,metashape_config,photoset,sensitivity, f_score, config_name) %>%
+  rename(config= config_name)
+
+stats_summ_foc = stats_summ %>%
+  filter(metric == "f_score") %>%
+  select(metashape_config,photoset,height_cat,tree_position,best_f = value) %>%
+  mutate(metashape_config = metashape_config %>% as.character %>% as.numeric)
+
+stats_for_treedet = left_join(stats_for_treedet, stats_summ_foc, by=c("height_cat","tree_position","metashape_config","photoset"))
+
+## Select focal Metashape parameter sets, tree heights, etc ##
+stats_main = stats_for_treedet %>%
+  filter(metashape_config %in% c(15, 30, 32, 34, 532)) %>%
+  filter(height_cat %in% c("10+","20+")) %>%
+  filter(photoset %in% c("paramset15","paramset14"))
+
+## Exclude if it's a sensitivity one and it's < 0.2 less than the best f
+stats_main = stats_main %>%
+  mutate(exclude_sens = f_score < (best_f - 0.1)) %>%
+  mutate(sensitivity = ifelse(exclude_sens,NA,sensitivity)) %>%
+  select(-exclude_sens, -best_f)
+
+## Make longer so we can look for the best tree detection by metric
+stats_main = stats_main %>%
+  pivot_longer(c(sensitivity,f_score),names_to = "metric") %>%
+  filter(!is.na(value))
+
+
+
+### For each height cat and photoset (F and sens), get all detection params which are within 5% of the best
+
+height_cats = c("10+","20+")
+tree_positions = c("single","all")
+photosets = c("paramset14","paramset15")
+metrics = c("f_score","sensitivity") #,"sensitivity"
+metashape_configs = c(15, 30, 32, 34, 532)
+
+categories = expand.grid(height_cat = height_cats, tree_position = tree_positions,photoset = photosets,metric = metrics, metashape_config = metashape_configs)
+
+good_cfgs = list()
+
+for(i in 1:nrow(categories)) {
   
-
-write_csv(full_best_configs,data("parameter_set_definitions/best_vwf_w_smooths.csv"))
-write_csv(best_vwf_params,data("parameter_set_definitions/best_vwf_acrossSmooths012.csv"))
-write_csv(best_vwf_params_smooth1only,data("parameter_set_definitions/best_vwf_smooth1.csv"))
-
-
-
-
-# ### Check
-# 
-# check = stats %>%
-#   filter(smooth=1,
-#          chm_name = "paramset14_01")
-
-
-### Plotting of best params (linear)
-
-vwf_dat = stats %>%
-  filter(tree_position == "all",
-         height_cat == "10+",
-         is.na(c),
-         smooth %in% c(0:8)) %>%
-  filter(smooth==1,
-         chm_name == "paramset14_01") %>%
-  mutate(f_score = ifelse(f_score < 0.5, NA, f_score))
-
-
-ggplot(vwf_dat, aes(x = a, y = b, fill = f_score)) +
-  geom_tile() +
-  facet_grid(chm_name~smooth) +
-  scale_fill_viridis_c()
-
-
-### Plotting of best params (quadratic)
-
-vwf_dat = stats %>%
-  filter(tree_position == "all",
-         height_cat == "30+",
-         !is.na(c),
-         smooth %in% c(0:8),
-         (c >= -0.002 & c <= 0.001)) %>%
-  mutate(f_score = ifelse(f_score < 0.5, NA, f_score)) %>%
-  distinct(chm_name,a,b,c,f_score) %>%
-  filter(!is.na(f_score))
-
-ggplot(vwf_dat, aes(x = a, y = b, fill = f_score, color=f_score)) +
-  geom_tile(size=5) +
-  facet_grid(chm_name~c) +
-  scale_fill_viridis_c() +
-  scale_color_viridis_c()
+  category = categories[i,]
+  
+  stats_summ_foc = stats_main %>%
+    filter(height_cat == category$height_cat,
+           tree_position == category$tree_position,
+           photoset == category$photoset,
+           metric == category$metric,
+           metashape_config == category$metashape_config)
+  
+  max = max(stats_summ_foc$value)
+  if(category$metric == "f_score")  {
+    min = max - 0.01
+  } else {
+    min = max - 0.1
+  }
+  
+  good = stats_summ_foc[stats_summ_foc$value >= min,"config"] %>% pull() %>% as.character
+  
+  good_cfgs[[i]] = good
+  
+}
 
 
 
+# Convenience function: which cats still need to be satisfied by selecting a config for them?
+satisfied_cat = function(selected_cfgs, good_cfgs) {
+  satisfied = NULL
+  for(i in 1:length(good_cfgs)) {
+    incommon = (intersect(good_cfgs[i] %>% unlist(),selected_cfgs) %>% length) > 0
+    satisfied = c(satisfied,incommon)
+  }
+  return(satisfied)
+}
+
+selected_cfgs = NULL
+
+all_cfgs_byfrequency = table(unlist(good_cfgs)) %>% sort(decreasing=TRUE) %>% names
+
+cats_satisfied = satisfied_cat(selected_cfgs, good_cfgs)
+
+while(sum(!cats_satisfied) > 0 ) {
+  #which cats still need to be satisfied
+  cats_satisfied = satisfied_cat(selected_cfgs, good_cfgs)
+  #get the configs from the unsatisfied cats
+  cfgs_from_unsatisfied = good_cfgs[which(!cats_satisfied)] %>% unlist %>% unique
+  # of those configs, which is the most common across all cats (even satisfied ones)
+  next_cfg = intersect(all_cfgs_byfrequency,cfgs_from_unsatisfied)[1]
+  selected_cfgs = c(selected_cfgs,next_cfg)
+}
+
+selected_cfgs
+
+
+## Metashape configs selected
+# c(15, 30, 32, 34, 530, 532, 534)
+
+## Tree detection sets selected
+# c("vwf_196", "vwf_186", "vwf_197", "vwf_131", "vwf_188", "vwf_120", "vwf_055", "vwf_110", "vwf_045")
 
 
 
-    ### Make a list of the best paramsets
 
-## For each combo of tree position & height, get the parameter set that maximizes f_score and correlation
 
+
+
+
+
+
+
+### Manual inspection of stats to compare methods
+
+stats_man = stats %>%
+  filter(metashape_config == 32 & photoset == "paramset14" & height_cat == "10+" & tree_position == "single" & config_name %in% c("las_1020","vwf_196"))
+
+stats_man = stats %>%
+  filter(metashape_config %in% c(30,32) & photoset == "paramset14" & height_cat == "10+" & tree_position == "single" & config_name %in% c("vwf_196"))
 
 
 
