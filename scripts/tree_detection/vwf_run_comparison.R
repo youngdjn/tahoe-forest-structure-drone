@@ -24,6 +24,10 @@ source(here("scripts/tree_detection/vwf_functions.R"))
 
 params = read_csv(data("parameter_set_definitions/vwfdefs_fullrange.csv"))
 
+## Keep just the focal paramsets
+params = params %>%
+  filter(detection_params_name %in% c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120","vwf_121", "vwf_207", "vwf_109"))
+
 # Run for multiple CHMs
 
 # If running manually, specify paramset names
