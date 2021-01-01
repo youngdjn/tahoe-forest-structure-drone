@@ -52,28 +52,12 @@ man = stats %>%
          tree_position == "single",
          height_cat == "20+")
 
-# 
-# ## Temporary: all metashape 14_028 remove, replace with 14_228
-# 
-# stats = stats %>%
-#   filter(metashape_run_name != "paramset14_028")
-# 
-# stats[stats$metashape_run_name == "paramset14_228",c("metashape_config")] = 28
-# stats[stats$metashape_run_name == "paramset14_228",c("metashape_run_name")] = "paramset14_028"
-# 
-# 
-# stats = stats %>%
-#   filter(metashape_run_name != "paramset14_032")
-# 
-# stats[stats$metashape_run_name == "paramset14_232",c("metashape_config")] = 32
-# stats[stats$metashape_run_name == "paramset14_232",c("metashape_run_name")] = "paramset14_0328"
-# 
-# 
-# stats = stats %>%
-#   filter(metashape_run_name != "paramset15_028")
-# 
-# stats[stats$metashape_run_name == "paramset15_228",c("metashape_config")] = 28
-# stats[stats$metashape_run_name == "paramset15_228",c("metashape_run_name")] = "paramset15_028"
+
+#### OPTIONAL filtering to only focal Metashape sets and focal VWF sets: for testing effect of doubling max_neighbors (for thins 2_2 and 1_2) ####
+stats = stats %>%
+  filter(config_name %in% c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120", "vwf_121", "vwf_207", "vwf_109")) %>%
+  filter(metashape_config %in% c(11:16, 29:34, 411:416, 429:434)) %>%
+  filter(photoset %in% c("paramset14","paramset15"))
 
 
 #### Get the best metashape paramsets 
@@ -370,20 +354,26 @@ selected_cfgs
 
 
 ## Metashape configs selected
-# c(11:16)
+# c(11:16) # also try 29:34 for 200 max_neighbors
 
 ## Tree detection sets selected
-# c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120", 
+# c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120",
 #   "vwf_121", "vwf_207", "vwf_109")
-
 
 
 ### Now do a secondary tuning where we just run these sets, on photosets 14 and 15, but compare 100 and 200 max_neighbors both for thin 2_2 and for thin 1_2.
 # We already have this for 2_2, so just need to repeat this subset of metashape and tree detection for 1_2.
 
+## Done: the repeats of the metashape sets 11:16 and 29:34 are 411:416 and 429:434.
+## There was no pronounced or consistent effect of doubling max_neighbors, so don't need to do that.
+
+## So this means we should run sets 11:16, and the above VWFs for all thins, both heights and composites, both angles
+# reg: 14, 15
+# 25deg: 26, 27
+# same alt, diff angle: 31, 32   _2121,2111,2222,4242,4222
 
 
-
+## Also need to compare the ones that use different EV (including composite: 41, 42)
 
 
 
