@@ -28,6 +28,10 @@ params = read_csv(data("parameter_set_definitions/vwfdefs_fullrange.csv"))
 # params = params %>%
 #   filter(detection_params_name %in% c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120","vwf_121", "vwf_207", "vwf_109"))
 
+# ## Keep just the focal paramsets
+# params = params %>%
+#   filter(detection_params_name %in% c("vwf_196", "vwf_186", "vwf_120","vwf_109"))
+
 # Run for multiple CHMs
 
 # If running manually, specify paramset names
@@ -64,7 +68,7 @@ if(length(command_args) == 0) {
 paramset_names = paramset_names %>% sample()
 
 ### Run the search
-options(future.globals.maxSize=15000*1024^2) # 5 GB
+options(future.globals.maxSize=15000*1024^2) # 15 GB
 plan(multiprocess(workers=4))
 walk(paramset_names,.f = vwf_singlechm_multiparamset, parallelize_params = TRUE, params = params)
 
