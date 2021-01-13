@@ -1,4 +1,4 @@
-# If there is a directory with drone maps for more Metashape and/or tree detection parameter sets than need to be tested, this script can filter through it to keep only the desired ones (in a separate directory)
+# If there is a directory with CHMs for more Metashape parameter sets than need to be tested, this script can filter through it to keep only the desired ones (in a separate directory)
 
 library(tidyverse)
 library(here)
