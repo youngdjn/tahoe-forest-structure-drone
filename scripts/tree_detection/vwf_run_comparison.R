@@ -69,7 +69,5 @@ paramset_names = paramset_names %>% sample()
 
 ### Run the search
 options(future.globals.maxSize=15000*1024^2) # 15 GB
-plan(multiprocess(workers=4))
+plan(multiprocess())
 walk(paramset_names,.f = vwf_singlechm_multiparamset, parallelize_params = TRUE, params = params)
-
-
