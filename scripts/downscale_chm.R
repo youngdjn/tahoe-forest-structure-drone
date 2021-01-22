@@ -53,7 +53,7 @@ for(i in 1:nrow(names_df)) {
     # What will the downscaled raster be named?
     metashape_set_name = paste0(tgt_name[j],names_row$metashape_parameters)
     filename = paste(names_row$photoset, metashape_set_name, names_row$timestamp, "dsm_chm.tif",sep = "_")
-    path_filename = data(paste0("metashape_outputs_postprocessed/chm_new/",filename))
+    path_filename = data(paste0("metashape_outputs_postprocessed/chm/",filename))
     
     # Does it exist already? If so, skip
     if(file.exists(path_filename)) {
