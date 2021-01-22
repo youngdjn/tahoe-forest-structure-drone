@@ -62,7 +62,6 @@ stats = stats %>%
 
 #### Get the best metashape paramsets 
 
-
 stats_summ_pre = stats %>%
   filter(height_cat %in% c("10+","20+"),
          photoset != "paramset15a") %>%
@@ -90,6 +89,24 @@ stats_summ = left_join(stats_summ_scores,stats_summ_configs,by=c("metashape_conf
   mutate(cfg_num = str_split(config,pattern=fixed("_")) %>% map(2))%>%
   mutate(metashape_config = as.factor(metashape_config))
 
+
+## Temporarily reorder x-axis of plot so 1000s are together
+order = c(7, 1007, 2007,
+          8, 1008, 2008,
+          9, 1009, 2009,
+          10, 1010, 2010,
+          11, 1011, 2011, 
+          12, 1012, 2012,
+          13, 1013, 2013,
+          14, 1014, 2014,
+          15, 1015, 2015,
+          16, 1016, 2016,
+          17, 1017, 2017,
+          18, 1018, 2018)
+
+
+stats_summ = stats_summ %>%
+  mutate(metashape_config = factor(metashape_config, levels=order))
 
 # %>%
 #   arrange(photoset_height_position) %>%

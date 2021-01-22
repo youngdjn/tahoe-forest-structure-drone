@@ -45,6 +45,11 @@ for(i in 1:nrow(names_df)) {
 
   for(j in 1:length(tgt_res)) {
     
+    # if it's an already downscaled raster, skip
+    if(as.numeric(as.character(names_row$metashape_parameters)) > 999) {
+      next()
+    }
+    
     # What will the downscaled raster be named?
     metashape_set_name = paste0(tgt_name[j],names_row$metashape_parameters)
     filename = paste(names_row$photoset, metashape_set_name, names_row$timestamp, "dsm_chm.tif",sep = "_")
