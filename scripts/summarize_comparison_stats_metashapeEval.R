@@ -55,8 +55,9 @@ man = stats %>%
 
 #### OPTIONAL filtering to only focal Metashape sets and focal VWF sets: for testing effect of doubling max_neighbors (for thins 2_2 and 1_2) ####
 stats = stats %>%
-  filter(config_name %in% c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120", "vwf_121", "vwf_207", "vwf_109")) %>%
-  filter(metashape_config %in% c(11:16, 29:34, 411:416, 429:434)) %>%
+  #filter(config_name %in% c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120", "vwf_121", "vwf_207", "vwf_109")) %>%
+  #filter(metashape_config %in% c(11:16, 29:34, 411:416, 429:434)) %>%
+  filter(metashape_config %in% c(1007:1018)) %>%
   filter(photoset %in% c("paramset14","paramset15"))
 
 
@@ -91,18 +92,18 @@ stats_summ = left_join(stats_summ_scores,stats_summ_configs,by=c("metashape_conf
 
 
 ## Temporarily reorder x-axis of plot so 1000s are together
-order = c(7, 1007, 2007,
-          8, 1008, 2008,
-          9, 1009, 2009,
-          10, 1010, 2010,
-          11, 1011, 2011, 
-          12, 1012, 2012,
-          13, 1013, 2013,
-          14, 1014, 2014,
-          15, 1015, 2015,
-          16, 1016, 2016,
-          17, 1017, 2017,
-          18, 1018, 2018)
+order = c(7, 1007, 2007,4007,
+          8, 1008, 2008,4008,
+          9, 1009, 2009,4009,
+          10, 1010, 2010,4010,
+          11, 1011, 2011, 4011,
+          12, 1012, 2012,4012,
+          13, 1013, 2013,4013,
+          14, 1014, 2014,4014,
+          15, 1015, 2015,4015,
+          16, 1016, 2016,4016,
+          17, 1017, 2017,4017,
+          18, 1018, 2018, 4018)
 
 
 stats_summ = stats_summ %>%
@@ -160,7 +161,7 @@ ggarrange(p_a,p_b,p_c,ncol=1)
 
 
 
-#### In each tree category and flight altitude, how much better is 200 max neighbors than 100?
+#### In each tree category and flight altitude, how much better is 200 max neighbors than 100? (this is defunct now that not making this comparison)
 
 comp_neighbors = stats_summ %>%
   filter(metashape_config %in% c(7:18,25:36)) %>%
@@ -191,7 +192,7 @@ stats
 #### Select best Metashape parameter sets ####
 
 stats_summ_main = stats_summ %>%
-  filter(metashape_config %in% 7:18)  ## look just at the sets with 100 max neighbors, and exclude the ones that are clearly bad (1-6)
+  filter(metashape_config %in% 1007:1018)  ## look just at the sets with 100 max neighbors, and exclude the ones that are clearly bad (1-6)
 
 ### For each height cat and photoset (F and sens), get all sets which are within 5% of the best
 
@@ -262,7 +263,7 @@ selected_cfgs
 
 
 ## selected 11, 14, 15. Expanded to 11, 12, 13, 14, 15, 16 to include mild and moderate filtering since most of the selected were mild but with more neighbors it seems to prefer moderate.
-
+# 9, 11, 15, 16 # everything was satisfied for 16, but adding the others for comparison and backwards comparison to previous work which used them
 
 
 #### Get the best tree detection params ####
@@ -286,11 +287,11 @@ stats_for_treedet = left_join(stats_for_treedet, stats_summ_foc, by=c("height_ca
 
 ## Select focal Metashape parameter sets, tree heights, etc ##
 stats_main = stats_for_treedet %>%
-  filter(metashape_config %in% c(11:16)) %>%
+  filter(metashape_config %in% c(1009, 1011, 1015, 1016)) %>%
   filter(height_cat %in% c("10+","20+")) %>%
   filter(photoset %in% c("paramset15","paramset14"))
 
-## Exclude if it's a sensitivity one and it's < 0.2 less than the best f
+## Exclude if it's a sensitivity one and it's < 0.1 less than the best f
 stats_main = stats_main %>%
   mutate(exclude_sens = f_score < (best_f - 0.1)) %>%
   mutate(sensitivity = ifelse(exclude_sens,NA,sensitivity)) %>%
@@ -305,11 +306,11 @@ stats_main = stats_main %>%
 
 ### For each height cat and photoset (F and sens), get all detection params which are within 5% of the best
 
-height_cats = c("10+","20+")
-tree_positions = c("single","all")
+height_cats = c("10+", "20+")
+tree_positions = c("single", "all")
 photosets = c("paramset14","paramset15")
-metrics = c("f_score","sensitivity") #,"sensitivity"
-metashape_configs = c(11:16)
+metrics = c("f_score", "sensitivity") #,"sensitivity"
+metashape_configs = c(1009, 1011, 1015, 1016)
 
 categories = expand.grid(height_cat = height_cats, tree_position = tree_positions,photoset = photosets,metric = metrics, metashape_config = metashape_configs)
 
@@ -373,10 +374,14 @@ selected_cfgs
 ## Metashape configs selected
 # c(11:16) # also try 29:34 for 200 max_neighbors
 
-## Tree detection sets selected
-# c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120",
-#   "vwf_121", "vwf_207", "vwf_109")
 
+## For the initial selection of VWF methods based on photosets 14 and 15:
+# 113 was the only one necessary for 10+, single, 14 and 15.
+# To extend to "10/20+ and single/all, 14/15, need to add 196, 122.
+# To maximize sensitivity, need to add: 121,185, 110, 109
+# If just for 1016, 10/20, single/all, 14/15, f_score/sens: 196, 113, 120
+
+# Total selected: c("vwf_113", "vwf_121", "vwf_122", "vwf_120", "vwf_185", "vwf_196", "vwf_110", "vwf_109")
 
 ### Now do a secondary tuning where we just run these sets, on photosets 14 and 15, but compare 100 and 200 max_neighbors both for thin 2_2 and for thin 1_2.
 # We already have this for 2_2, so just need to repeat this subset of metashape and tree detection for 1_2.
@@ -384,7 +389,7 @@ selected_cfgs
 ## Done: the repeats of the metashape sets 11:16 and 29:34 are 411:416 and 429:434.
 ## There was no pronounced or consistent effect of doubling max_neighbors, so don't need to do that.
 
-## So this means we should run sets 11:16, and the above VWFs for all thins, both heights and composites, both angles
+## So this means we should run sets 1009, 1011, 1015, 1016, and the above VWFs for all thins, both heights and composites, both angles
 # reg: 14, 15
 # 25deg: 26, 27
 # same alt, diff angle: 31, 32   _2121,2111,2222,4242,4222
