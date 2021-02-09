@@ -38,6 +38,10 @@ tgt_name = c(3, 2, 1)
 tgt_res = c(0.25)
 tgt_name = c(4)
 
+# Final (res of 12 cm)
+tgt_res = 0.12
+tgt_name = 1
+
 ### Downscale each raster to each resolution
 for(i in 1:nrow(names_df)) {
   names_row = names_df[i,]
