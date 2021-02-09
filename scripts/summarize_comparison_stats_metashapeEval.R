@@ -391,7 +391,7 @@ selected_cfgs
 
 ## So this means we should run sets 1009, 1011, 1015, 1016, and the above VWFs for all thins, both heights and composites, both angles
 # reg: 14, 15
-# 25deg: 26, 27
+# 25deg: 26b, 27b
 # same alt, diff angle: 31, 32   _2121,2111,2222,4242,4222
 
 
