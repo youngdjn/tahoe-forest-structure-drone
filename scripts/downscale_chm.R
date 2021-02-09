@@ -51,7 +51,7 @@ for(i in 1:nrow(names_df)) {
   for(j in 1:length(tgt_res)) {
     
     # if it's an already downscaled raster, skip
-    if((as.numeric(as.character(names_row$metashape_parameters)) > 999 ) & (as.numeric(as.character(names_row$metashape_parameters)) < 4999 )) {
+    if(((as.numeric(as.character(names_row$metashape_parameters)) > 999 ) & (as.numeric(as.character(names_row$metashape_parameters)) < 4999 )) | (as.numeric(as.character(names_row$metashape_parameters)) > 5999 ) {
       next()
     }
     
