@@ -28,7 +28,7 @@ dtm = raster(data("dem_usgs/dem_usgs.tif")) %>% projectRaster(crs = "+proj=utm +
 
 
 ## get DSM layers from metashape outputs directory
-dsm_files = list.files("/storage/forestuav/metashape_outputs/comparison_project",pattern=".*_dsm\\.tif", full.names=TRUE)  # to filter to ones matching a name: pattern=paste0(las_layer_name,".*\\.las")
+dsm_files = list.files("/storage/forestuav/metashape_outputs/comparison_project_thin_alt",pattern=".*_dsm\\.tif", full.names=TRUE)  # to filter to ones matching a name: pattern=paste0(las_layer_name,".*\\.las")
 
 
 crop_and_write_chm = function(dsm_file) {
