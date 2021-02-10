@@ -24,13 +24,20 @@ source(here("scripts/tree_detection/vwf_functions.R"))
 
 params = read_csv(data("parameter_set_definitions/vwfdefs_fullrange.csv"))
 
-# ## Keep just the focal paramsets
+# ## Keep just the focal detection sets
 # params = params %>%
 #   filter(detection_params_name %in% c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120","vwf_121", "vwf_207", "vwf_109"))
 
-# ## Keep just the focal paramsets
+# ## Keep just the focal detection sets
 # params = params %>%
 #   filter(detection_params_name %in% c("vwf_196", "vwf_186", "vwf_120","vwf_109"))
+
+
+## Keep just the focal detection sets
+# The sets selected after downscaling
+params = params %>%
+  filter(detection_params_name %in% c("vwf_113", "vwf_121", "vwf_122", "vwf_120", "vwf_185", "vwf_196", "vwf_110", "vwf_109"))
+
 
 # Run for multiple CHMs
 
@@ -55,7 +62,10 @@ if(length(command_args) == 0) {
     pre_dates_part2 = filenames %>% str_split("_") %>% map(2) %>% unlist
     pre_dates = paste(pre_dates_part1,pre_dates_part2,sep="_")
     
+    ## Filter out the 5xxx metashape sets because those are the pre-downscaled ones (the downscaled ones are prefixed with 1)
     
+    pre_dates = pre_dates[as.numeric(pre_dates_part1 %>% as.character) >= 5000 & as.numeric(pre_dates_part1 %>% as.character) <= 5999]
+
     paramset_names = unique(pre_dates)
     
   }
@@ -63,6 +73,7 @@ if(length(command_args) == 0) {
 } else if (length(command_args) > 0) {
   paramset_names = command_args[1]
 }
+
 
 # Ramdomize paramset names so can run multiple parallel
 paramset_names = paramset_names %>% sample()
