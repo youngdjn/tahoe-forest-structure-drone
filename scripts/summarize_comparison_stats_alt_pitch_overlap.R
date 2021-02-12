@@ -48,17 +48,6 @@ stats_count_unique = stats %>%
 
 #### Get the best metashape paramsets 
 
-stats_summ_pre = stats %>%
-  filter(height_cat %in% c("10+","20+")) %>%
-  group_by(metashape_config,photoset, height_cat, tree_position) %>%
-  summarize(sens_config = config_name[which(sensitivity == quantile(ifelse(f_score > (max(f_score-0.2)),sensitivity,0),1))][1], ## in the future, need to slect the config with best F score if multiple have sens == 1
-            sensitivity = quantile(ifelse(f_score > (max(f_score-0.2)),sensitivity,0),1),
-            f_config = config_name[which(f_score == quantile(f_score,1))][1],
-            f_score = quantile(f_score,1),
-            height_config = config_name[which(height_cor == quantile(height_cor,1))][1],
-            height_cor = quantile(height_cor,1))
-
-
 ### simpler alternative
 stats_summ_pre = stats %>%
   mutate(thin_code = str_sub(metashape_config,3,3) %>% as.numeric,
@@ -76,7 +65,31 @@ stats_summ_pre = stats %>%
                                  "paramset15" = "90m_nadir",
                                  "paramset26b" = "120m_25deg",
                                  "paramset27b" = "90m_25deg")) %>%
-  filter(height_cat %in% c("10+","20+")) %>%
+  filter(height_cat %in% c("10+","20+"))
+
+
+
+## make a heatmap plot of f score by vwf x metashape
+
+d_plot = stats_summ_pre %>%
+  filter(#altitude_pitch == "120m_nadir",
+         height_cat == "10+",
+         tree_position == "single") %>%
+         #thin == "90/90") %>%
+  mutate(set_code = factor(set_code, levels=c("9","11","15","16")))
+
+ggplot(d_plot,aes(x=set_code,y=config_name,fill=sensitivity)) +
+  geom_tile() +
+  scale_fill_viridis() +
+  facet_grid(thin~altitude_pitch)
+
+
+
+
+
+
+
+stats_summ = stats_summ_pre %>%
   group_by(altitude_pitch, height_cat, tree_position, thin) %>%
   summarize(f_config = config_name[which(f_score == quantile(f_score,1))][1],
             meta_config = set_code[which(f_score == quantile(f_score,1))][1],
