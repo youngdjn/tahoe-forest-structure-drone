@@ -489,7 +489,7 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   if(reduced_area) {
     cat("Using reduced-area polygon for",drone_map_file,"\n")
     smaller_project_mask = st_read(data("study_area_perimeter/smaller_project_mask.geojson")) %>% st_transform(st_crs(ground_map))
-    smaller_project_mask = smaller_project_mask %>% st_buffer(-search_distance)
+    smaller_project_mask = smaller_project_mask %>% st_buffer(2*search_distance)
     ground_map_new = st_intersection(ground_map,smaller_project_mask)
   } else{
     ground_map_new = ground_map
@@ -508,8 +508,8 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   data_prepped = prep_data(ground_map_new, drone_map, reduced_area = reduced_area) # takes about 1 min
   
   ### Of the trees > 10 m tall, If the drone map has > 5x as many trees as the ground map, or < 1/10, skip it
-  n_drone_trees = nrow(data_prepped$drone_map %>% filter(height > 10))
-  n_ground_trees = nrow(data_prepped$ground_map %>% filter(Height > 10))
+  n_drone_trees = nrow(data_prepped$drone_map %>% filter(height > 10, internal_area == TRUE))
+  n_ground_trees = nrow(data_prepped$ground_map %>% filter(Height > 10, internal_area == TRUE))
   if((n_drone_trees > 5*n_ground_trees) | (n_drone_trees < 0.1*n_ground_trees)) {
     return(FALSE)
   }
