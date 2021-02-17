@@ -485,7 +485,7 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   #### For the reduced-area drone surveys, clip the ground map to the smaller mask
   
   ## projects applicable: 14b, 15b, 19b, 20b, 
-  reduced_area = grepl("14b_|15b_|19b_|20b_|41_|42_", drone_map_file)
+  reduced_area = grepl("set14b_|set15b_|set19b_|set20b_|set41_|set42_", drone_map_file)
   if(reduced_area) {
     cat("Using reduced-area polygon for",drone_map_file,"\n")
     smaller_project_mask = st_read(data("study_area_perimeter/smaller_project_mask.geojson")) %>% st_transform(st_crs(ground_map))
