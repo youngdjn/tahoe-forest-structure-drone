@@ -52,7 +52,7 @@ for(i in 1:nrow(names_df)) {
     
     # if it's an already downscaled raster, skip
     if(((as.numeric(as.character(names_row$metashape_parameters)) > 999 ) & (as.numeric(as.character(names_row$metashape_parameters)) < 4999 )) |
-       (as.numeric(as.character(names_row$metashape_parameters)) > 5999 )) {
+       (as.numeric(as.character(names_row$metashape_parameters)) > 6999 )) {
       next()
     }
     
