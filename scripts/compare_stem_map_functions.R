@@ -449,7 +449,7 @@ match_compare_single = function(data_prepped, drone_map_name) {
   match_stats$drone_map_name = drone_map_name
   
   match_stats = match_stats %>%
-    mutate_if(is.numeric, round, digits=2)
+    mutate_if(is.numeric, round, digits=3)
   
   write_csv(match_stats, data(paste0("drone_map_evals/individual/stats_", drone_map_name, ".csv")))
   
