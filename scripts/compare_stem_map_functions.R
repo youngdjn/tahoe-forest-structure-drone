@@ -421,7 +421,7 @@ match_compare_single = function(data_prepped, drone_map_name) {
   cat("Comparing to ground map:",drone_map_name,"\n")
   
   # need to skip one CHM that is bad (no real trees in it)
-  if(str_detect(drone_map_name,fixed("paramset27b_15215"))) {
+  if(str_detect(drone_map_name,fixed("paramset27b_152"))) {
     return(FALSE)
   }
 
@@ -483,6 +483,8 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
     cat("Already exists:",outfile,". Skipping.\n")
     return(FALSE)
   }
+  
+  cat("Starting stats for:",drone_map_name,"\n")
 
   
   drone_map = st_read(drone_map_file, quiet=TRUE) %>% st_transform(3310)
