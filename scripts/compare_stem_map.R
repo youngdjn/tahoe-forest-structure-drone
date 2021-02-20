@@ -51,7 +51,7 @@ dir.create(data("drone_map_evals/individual"))
 dir.create(data("drone_map_evals/stem_map_pairing_lines"))
 
 options(future.globals.maxSize=64000*1024^2) # 64 GB
-plan(multicore(workers=8))
+plan(multicore(workers=4))
 
 # Run it. Don't need the returned value. It is a record of whether the drone set was skipped because it had an implausible number of trees (or the output already existsed) .
 comparison_plausible = future_map(drone_map_files %>% sample, match_compare_single_wrapper, ground_map = ground_map, .options=future_options(scheduling=5))
