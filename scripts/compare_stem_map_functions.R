@@ -421,7 +421,7 @@ match_compare_single = function(data_prepped, drone_map_name) {
   cat("Comparing to ground map:",drone_map_name,"\n")
   
   # need to skip one CHM that is bad (no real trees in it)
-  if(str_detect(drone_map_name,fixed("paramset27b_152"))) {
+  if(str_detect(drone_map_name,fixed("paramset27b_152")) | str_detect(drone_map_name,fixed("paramset27b_15016")) | str_detect(drone_map_name,fixed("paramset26b_15211"))) {
     return(FALSE)
   }
 
