@@ -62,9 +62,9 @@ if(length(command_args) == 0) {
     pre_dates_part2 = filenames %>% str_split("_") %>% map(2) %>% unlist
     pre_dates = paste(pre_dates_part1,pre_dates_part2,sep="_")
     
-    ## Filter out the 5xxx metashape sets because those are the pre-downscaled ones (the downscaled ones are prefixed with 1)
+    ## Filter out the 5xxx and 6xxx metashape sets because those are the pre-downscaled ones (the downscaled ones are prefixed with 1)
     
-    pre_dates = pre_dates[!(as.numeric(pre_dates_part2 %>% as.character) >= 5000 & as.numeric(pre_dates_part2 %>% as.character) <= 5999)]
+    pre_dates = pre_dates[!(as.numeric(pre_dates_part2 %>% as.character) >= 5000 & as.numeric(pre_dates_part2 %>% as.character) <= 6999)]
 
     paramset_names = unique(pre_dates)
     
