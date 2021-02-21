@@ -163,10 +163,13 @@ prep_data = function(ground_map, drone_map, reduced_area) {
   if(reduced_area) {
     ground_map_footprint = st_read(data("study_area_perimeter/smaller_project_mask.geojson")) %>% st_transform(st_crs(drone_map))
   } else {
-      ground_map_footprint = st_read(data("study_area_perimeter/ground_map_mask_precise.geojson")) %>% st_transform(st_crs(drone_map))
+    ground_map_footprint = st_read(data("study_area_perimeter/ground_map_mask_precise.geojson")) %>% st_transform(st_crs(drone_map))
   }
 
+  
+  
   drone_map = st_intersection(drone_map,ground_map_footprint %>% st_buffer(search_distance) )
+  ground_map = st_intersection(ground_map,ground_map_footprint %>% st_buffer(search_distance) )  
   
   # Need a label to know if drone map trees were part of a buffered-in polygon
   ground_map_footprint_bufferin = ground_map_footprint %>% st_buffer(-search_distance*2)
@@ -418,7 +421,7 @@ make_lines_between_matches = function(ground_map, drone_map, drone_map_name) {
 ## Function to match and compare a single drone map to the ground map (also make a lines shapefile with connections between trees)
 match_compare_single = function(data_prepped, drone_map_name) {
   
-  cat("Comparing to ground map:",drone_map_name,"\n")
+  cat("Comparing the following to the ground map:",drone_map_name,"\n")
   
   ground_map_compared = compare_tree_maps(data_prepped$ground_map, data_prepped$drone_map)
   match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
@@ -515,7 +518,7 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   if((n_drone_trees > 5*n_ground_trees) | (n_drone_trees < 0.1*n_ground_trees)) {
     return(FALSE)
   }
-  
+
   ## Run comparison/eval ##
   match_compare_single(data_prepped, drone_map_name = drone_map_name)
 
