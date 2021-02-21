@@ -420,11 +420,6 @@ match_compare_single = function(data_prepped, drone_map_name) {
   
   cat("Comparing to ground map:",drone_map_name,"\n")
   
-  # need to skip one CHM that is bad (no real trees in it)
-  if(str_detect(drone_map_name,fixed("paramset27b_152")) | str_detect(drone_map_name,fixed("paramset27b_15016")) | str_detect(drone_map_name,fixed("paramset26b_15211"))) {
-    return(FALSE)
-  }
-
   ground_map_compared = compare_tree_maps(data_prepped$ground_map, data_prepped$drone_map)
   match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
   match_stats_alltrees$tree_position = "all"
