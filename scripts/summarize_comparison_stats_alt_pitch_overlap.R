@@ -101,8 +101,8 @@ stats_summ = stats_summ_pre %>%
                                                "120m_25deg",
                                                "90m_25deg")))
 
-stats_summ_plot = stats_summ_pre %>%
-  filter(tree_position == "all", height_cat == "10+")
+stats_summ_plot = stats_summ %>%
+  filter(tree_position == "single", height_cat == "10+")
 
 
 ## plot
