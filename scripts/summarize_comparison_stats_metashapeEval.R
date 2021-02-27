@@ -31,7 +31,9 @@ stats = stats %>%
   mutate(metashape_layer_name = str_split(drone_map_name,"-") %>% map_chr(1)) %>%
   mutate(metashape_run_name_pt1 = str_split(metashape_layer_name,"_") %>% map_chr(c(1))) %>%
   mutate(metashape_run_name_pt2 = str_split(metashape_layer_name,"_") %>% map_chr(c(2))) %>%
-  mutate(metashape_run_name = paste(metashape_run_name_pt1,metashape_run_name_pt2, sep="_"))
+  mutate(metashape_run_name = paste(metashape_run_name_pt1,metashape_run_name_pt2, sep="_")) %>%
+  ## remove an old layer that was re-run but original not removed
+  filter(metashape_layer_name != "paramset15_15609_20210202T0655_dsm_chm")
 
 stats = left_join(stats, configs, by = c("config_name"="config_name"))
 

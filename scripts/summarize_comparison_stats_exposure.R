@@ -30,43 +30,38 @@ stats = stats %>%
   mutate(metashape_layer_name = str_split(drone_map_name,"-") %>% map_chr(1)) %>%
   mutate(metashape_run_name_pt1 = str_split(metashape_layer_name,"_") %>% map_chr(c(1))) %>%
   mutate(metashape_run_name_pt2 = str_split(metashape_layer_name,"_") %>% map_chr(c(2))) %>%
-  mutate(metashape_run_name = paste(metashape_run_name_pt1,metashape_run_name_pt2, sep="_")) %>%
-  ## remove an old layer that was re-run but original not removed
-  filter(metashape_layer_name != "paramset15_15609_20210202T0655_dsm_chm")
+  mutate(metashape_run_name = paste(metashape_run_name_pt1,metashape_run_name_pt2, sep="_"))
 
 stats = left_join(stats, configs, by = c("config_name"="config_name"))
 
-stats_alt_pitch = stats %>%
+stats_exp = stats %>%
   rename(photoset = metashape_run_name_pt1,
          metashape_config = metashape_run_name_pt2) %>%
   mutate(metashape_config = as.numeric(metashape_config)) %>%
-  filter(metashape_config %in% 15000:15999)
+  filter(metashape_config %in% 15000:16999) %>%
+  filter(photoset %in% c("paramset14b","paramset15b","paramset20b","paramset19b")) # excluding the composite "paramset41" because it incorrectly combines 120m_auto with 90m_low
 
 ## make sure the stats are unique
-stats_count_unique = stats_alt_pitch %>%
+stats_count_unique = stats_exp %>%
   group_by(config_name,photoset,metashape_config,tree_position,height_cat) %>%
   summarize(n = n())
 
 
 #### Get the best metashape paramsets 
 
+
 ### simpler alternative
-stats_summ_pre = stats_alt_pitch %>%
+stats_summ_pre = stats_exp %>%
   mutate(thin_code = str_sub(metashape_config,3,3) %>% as.numeric,
          set_code = str_sub(metashape_config,4,5) %>% as.numeric) %>%
   mutate(thin = dplyr::recode(thin_code,
-                       "0" = "80/80",
-                       "1" = "90/80",
-                       "2" = "80/90",
-                       "3" = "90/90",
-                       "4" = "95/90",
-                       "5" = "90/95",
-                       "6" = "95/95"),
-         altitude_pitch = recode(photoset,
-                                 "paramset14" = "120m_nadir",
-                                 "paramset15" = "90m_nadir",
-                                 "paramset26b" = "120m_25deg",
-                                 "paramset27b" = "90m_25deg")) %>%
+                       "1" = "95/95",
+                       "2" = "90/90"),
+         altitude_exposure = recode(photoset,
+                                 "paramset14b" = "120m_auto",
+                                 "paramset15b" = "90m_auto",
+                                 "paramset20b" = "120m_low",
+                                 "paramset19b" = "90m_low")) %>%
   filter(height_cat %in% c("10+","20+"))
 
 
@@ -75,7 +70,7 @@ stats_summ_pre = stats_alt_pitch %>%
 
 d_plot = stats_summ_pre %>%
   filter(#altitude_pitch == "120m_nadir",
-         height_cat == "20+",
+         height_cat == "10+",
          tree_position == "single") %>%
          #thin == "90/90") %>%
   mutate(set_code = factor(set_code, levels=c("9","11","15","16")))
@@ -83,7 +78,7 @@ d_plot = stats_summ_pre %>%
 ggplot(d_plot,aes(x=set_code,y=config_name,fill=f_score)) +
   geom_tile() +
   scale_fill_viridis() +
-  facet_grid(thin~altitude_pitch)
+  facet_grid(thin~altitude_exposure)
 
 
 
