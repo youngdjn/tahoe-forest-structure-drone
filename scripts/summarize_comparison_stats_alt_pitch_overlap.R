@@ -104,7 +104,7 @@ stats_alt_pitch_summ = stats_summ_pre %>%
                                                "90m_25deg")))
 
 stats_alt_pitch_summ_plot = stats_alt_pitch_summ %>%
-  filter(tree_position == "single", height_cat == "10+")
+  filter(tree_position == "all", height_cat == "10+")
 
 
 ## plot

@@ -50,16 +50,28 @@ stats_count_unique = stats %>%
 
 ## manual checking for best
 man = stats %>%
-  filter(metashape_config == 31,
+  filter(metashape_config == 1011,
          tree_position == "single",
          height_cat == "20+")
+
+stats = stats %>%
+  mutate(treedet_type = str_sub(config_name,1,3))
 
 
 #### OPTIONAL filtering to only focal Metashape sets and focal VWF sets: for testing effect of doubling max_neighbors (for thins 2_2 and 1_2) ####
 stats = stats %>%
   #filter(config_name %in% c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120", "vwf_121", "vwf_207", "vwf_109")) %>%
   #filter(metashape_config %in% c(11:16, 29:34, 411:416, 429:434)) %>%
-  filter(metashape_config %in% c(1007:1018)) %>%
+  
+  ## filter to 1007:1018 for VWF and 7:18 for las
+  filter(((treedet_type == "las") & (metashape_config %in% c(07:18))) | ((treedet_type == "vwf") & (metashape_config %in% c(1007:1018)))) %>%
+  
+  ## rename the 1007-1018 to 7-18 so they can also work for las
+  mutate(metashape_config = ifelse(metashape_config > 1000,metashape_config - 1000,metashape_config)) %>%
+  
+  ## optional filter to las only
+  #filter(treedet_type == "las") %>%
+  
   filter(photoset %in% c("paramset14","paramset15"))
 
 
@@ -68,7 +80,11 @@ stats = stats %>%
 stats_summ_pre = stats %>%
   filter(height_cat %in% c("10+","20+"),
          photoset != "paramset15a") %>%
-  group_by(metashape_config,photoset, height_cat, tree_position) %>%
+  
+  ##!! optional filtering to best sets
+  #filter(metashape_config %in% c(9,11,15,16)) %>% filter(config_name %in% c("vwf_122","vwf_196")) %>%
+
+    group_by(metashape_config,photoset, height_cat, tree_position) %>%
   summarize(sens_config = config_name[which(sensitivity == quantile(ifelse(f_score > (max(f_score-0.2)),sensitivity,0),1))][1], ## in the future, need to slect the config with best F score if multiple have sens == 1
             sensitivity = quantile(ifelse(f_score > (max(f_score-0.2)),sensitivity,0),1),
             f_config = config_name[which(f_score == quantile(f_score,1))][1],
@@ -120,7 +136,6 @@ stats_summ = stats_summ %>%
 ### F-score plot
 
 d_plot = stats_summ %>%
-  #filter(metashape_config %in% c(2,8,30,32, 532, 632)) %>% ##!! optional filtering to best sets
   filter(metric == "f_score")
 
 
@@ -264,8 +279,7 @@ while(sum(!cats_satisfied) > 0 ) {
 selected_cfgs
 
 
-## selected 11, 14, 15. Expanded to 11, 12, 13, 14, 15, 16 to include mild and moderate filtering since most of the selected were mild but with more neighbors it seems to prefer moderate.
-# 9, 11, 15, 16 # everything was satisfied for 16, but adding the others for comparison and backwards comparison to previous work which used them
+# selected 9, 11, 15, 16 # everything was satisfied for 16, but adding the others for comparison and backwards comparison to previous work which used them
 
 
 #### Get the best tree detection params ####
@@ -306,12 +320,12 @@ stats_main = stats_main %>%
 
 
 
-### For each height cat and photoset (F and sens), get all detection params which are within 5% of the best
+### For each height cat and photoset (F and sens), get all detection params which are within 0.015 F of the best
 
 height_cats = c("10+", "20+")
 tree_positions = c("single", "all")
 photosets = c("paramset14","paramset15")
-metrics = c("f_score", "sensitivity") #,"sensitivity"
+metrics = c("f_score") #,"sensitivity"
 metashape_configs = c(1009, 1011, 1015, 1016)
 
 categories = expand.grid(height_cat = height_cats, tree_position = tree_positions,photoset = photosets,metric = metrics, metashape_config = metashape_configs)

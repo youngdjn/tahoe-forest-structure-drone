@@ -54,10 +54,11 @@ stats_count_unique = stats_exp %>%
 stats_summ_pre = stats_exp %>%
   mutate(thin_code = str_sub(metashape_config,3,3) %>% as.numeric,
          set_code = str_sub(metashape_config,4,5) %>% as.numeric) %>%
-  mutate(thin = dplyr::recode(thin_code,
-                       "1" = "95/95",
-                       "2" = "90/90"),
-         altitude_exposure = recode(photoset,
+  mutate(thin = dplyr::case_when((thin_code=="1") & (photoset %in% c("paramset14b","paramset15b")) ~ "95/95",
+                                 (thin_code=="2") & (photoset %in% c("paramset14b","paramset15b")) ~ "90/90",
+                                 (thin_code=="1") & (photoset %in% c("paramset19b","paramset20b")) ~ "90/90",
+                                 (thin_code=="2") & (photoset %in% c("paramset19b","paramset20b")) ~ "80/80")) %>%
+  mutate(altitude_exposure = recode(photoset,
                                  "paramset14b" = "120m_auto",
                                  "paramset15b" = "90m_auto",
                                  "paramset20b" = "120m_low",
@@ -71,7 +72,7 @@ stats_summ_pre = stats_exp %>%
 d_plot = stats_summ_pre %>%
   filter(#altitude_pitch == "120m_nadir",
          height_cat == "10+",
-         tree_position == "single") %>%
+         tree_position == "all") %>%
          #thin == "90/90") %>%
   mutate(set_code = factor(set_code, levels=c("9","11","15","16")))
 
