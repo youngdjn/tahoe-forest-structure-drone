@@ -45,7 +45,7 @@ if(file.exists(dem_file)) {
 dtm_interp = raster(dem_file)
 
 ## get las layers from metashape outputs directory
-las_files = list.files("/storage/forestuav/metashape_outputs/comparison_project",pattern=".*\\.las", full.names=TRUE)  # to filter to ones matching a name: pattern=paste0(las_layer_name,".*\\.las")
+las_files = list.files("/storage/forestuav/meta17/metashape_outputs",pattern=".*\\.las", full.names=TRUE)  # to filter to ones matching a name: pattern=paste0(las_layer_name,".*\\.las")
 
 ## Only process LAS files < 5 GB
 #las_file_info = file.info(las_files)
@@ -61,7 +61,7 @@ crop_and_write_las = function(las_file) {
   filename_only = fileparts[length(fileparts)]
 
   # file to write
-  filename = paste0("/storage/forestuav/metashape_outputs_postprocessed/las/",filename_only,".laz")
+  filename = paste0("/storage/forestuav/meta17/metashape_outputs_postprocessed/las",filename_only,".laz")
 
   # skip if file aleady exists
   if(file.exists(filename)) {
