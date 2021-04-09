@@ -41,7 +41,7 @@ crop_and_write_chm = function(dsm_file) {
   filename_no_dsm = str_replace(filename_only,"_dsm","")
 
   # file to write
-  filename = paste0("/storage/forestuav/metashape_outputs_postprocessed/chm_exposure_composite/",filename_only,"_chm.tif")
+  filename = paste0("/storage/forestuav/meta17/metashape_outputs_postprocessed/",filename_only,"_chm.tif")
 
   # skip if file aleady exists
   if(file.exists(filename)) {
