@@ -1,4 +1,4 @@
-## Takes all the DSM files in the Metashape outputs folder and crops them to project area, converts to CHM, and saves
+## Takes all the DSM files in the Metashape outputs folder and crops them to project area, converts to CHM, rescales to 0.12 m, and saves
 
 library(sf)
 library(here)
@@ -73,6 +73,10 @@ crop_and_write_chm = function(dsm_file) {
 
   # calculate canopy height model
   chm = dsm - dtm_interp
+  
+  # downscale to 0.12 m
+  chm = projectRaster(chm,res=0.12, crs = "+proj=utm +zone=10 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs", method="bilinear")
+  
 
   # create dir if doesn't exist, then write
   writeRaster(chm,filename) # naming it metashape because it's just based on metashape dsm (and usgs dtm) -- to distinguish from one generated from point cloud
