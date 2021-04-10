@@ -33,10 +33,10 @@ params = read_csv(data("parameter_set_definitions/vwfdefs_fullrange.csv"))
 #   filter(detection_params_name %in% c("vwf_196", "vwf_186", "vwf_120","vwf_109"))
 
 
-## Keep just the focal detection sets
+## Keep just the focal detection sets: this was after determined the best ones by running all the 2_2 thins (the first round)
 # The sets selected after downscaling
-params = params %>%
-  filter(detection_params_name %in% c("vwf_113", "vwf_121", "vwf_122", "vwf_120", "vwf_185", "vwf_196", "vwf_110", "vwf_109"))
+# params = params %>%
+#   filter(detection_params_name %in% c("vwf_113", "vwf_121", "vwf_122", "vwf_120", "vwf_185", "vwf_196", "vwf_110", "vwf_109"))
 
 
 # Run for multiple CHMs
