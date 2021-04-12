@@ -17,6 +17,8 @@ stats_files = list.files(data("drone_map_evals/individual"), pattern="\\.csv", f
 
 stats = map_dfr(stats_files, read_csv)
 
+dir.create(data("drone_map_evals/compiled"),recursive = TRUE)
+
 write_csv(stats,data("drone_map_evals/compiled/comparison_stats_metashapeEval.csv"))
 
 
