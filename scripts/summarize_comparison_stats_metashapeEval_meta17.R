@@ -405,7 +405,7 @@ selected_cfgs
 # If it's just the best and most versatile metashape config (33), then we just need VWFs 208, 197 (or if tolerance is 0.02, we only need 134)
 # If doing for all sets, but only single trees: 207, 134, 208
 # for 10+ single, it's 142 regardless of metashape config
-# The set that covers all bases is 207, 197, 196, 132, 208
+# The set that covers all bases is 207, 197, 196, 132, 208, 142
 # With an increased F score tolerance (+- 0.02), it's 196 and 142 to cover all bases, and if we only care about single trees, it's 125
 # For meta 33, single trees 10+, the best is 114. so use that for Cal Fire
 

@@ -262,6 +262,8 @@ calc_match_stats = function(ground_map, drone_map) {
     filter(!is.na(drone_tree_id)) %>%
     mutate(height_err = drone_tree_height - ground_tree_height)
   
+write_csv(trees_matched,"~/Documents/temp/trees_matched.csv")
+  
   over10trees = trees_matched %>%
     filter(ground_tree_height >= 10) %>%
     summarize(height_mae = mean(abs(height_err)),
