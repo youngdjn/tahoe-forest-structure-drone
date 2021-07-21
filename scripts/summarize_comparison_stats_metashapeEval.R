@@ -58,8 +58,8 @@ stats = stats %>%
   mutate(treedet_type = str_sub(config_name,1,3))
 
 
-#### OPTIONAL filtering to only focal Metashape sets and focal VWF sets: for testing effect of doubling max_neighbors (for thins 2_2 and 1_2) ####
 stats = stats %>%
+  #### OPTIONAL filtering to only focal Metashape sets and focal VWF sets: for testing effect of doubling max_neighbors (for thins 2_2 and 1_2) ####
   #filter(config_name %in% c("vwf_196", "vwf_186", "vwf_185", "vwf_197", "vwf_176", "vwf_120", "vwf_121", "vwf_207", "vwf_109")) %>%
   #filter(metashape_config %in% c(11:16, 29:34, 411:416, 429:434)) %>%
   
@@ -209,7 +209,7 @@ stats
 #### Select best Metashape parameter sets ####
 
 stats_summ_main = stats_summ %>%
-  filter(metashape_config %in% 1007:1018)  ## look just at the sets with 100 max neighbors, and exclude the ones that are clearly bad (1-6)
+  filter(metashape_config %in% 7:18)  ## look just at the sets with 100 max neighbors, and exclude the ones that are clearly bad (1-6)
 
 ### For each height cat and photoset (F and sens), get all sets which are within 5% of the best
 
@@ -303,7 +303,7 @@ stats_for_treedet = left_join(stats_for_treedet, stats_summ_foc, by=c("height_ca
 
 ## Select focal Metashape parameter sets, tree heights, etc ##
 stats_main = stats_for_treedet %>%
-  filter(metashape_config %in% c(1009, 1011, 1015, 1016)) %>%
+  filter(metashape_config %in% c(9, 11, 15, 16)) %>%
   filter(height_cat %in% c("10+","20+")) %>%
   filter(photoset %in% c("paramset15","paramset14"))
 
@@ -325,8 +325,8 @@ stats_main = stats_main %>%
 height_cats = c("10+", "20+")
 tree_positions = c("single", "all")
 photosets = c("paramset14","paramset15")
-metrics = c("f_score") #,"sensitivity"
-metashape_configs = c(1009, 1011, 1015, 1016)
+metrics = c("f_score","sensitivity") #,"sensitivity"
+metashape_configs = c(9, 11, 15, 16)
 
 categories = expand.grid(height_cat = height_cats, tree_position = tree_positions,photoset = photosets,metric = metrics, metashape_config = metashape_configs)
 

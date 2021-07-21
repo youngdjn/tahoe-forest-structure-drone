@@ -67,8 +67,15 @@ stats_summ_pre = stats_alt_pitch %>%
                                  "paramset15" = "90m_nadir",
                                  "paramset26b" = "120m_25deg",
                                  "paramset27b" = "90m_25deg")) %>%
-  filter(height_cat %in% c("10+","20+"))
-
+  filter(height_cat %in% c("10+","20+")) %>%
+  # the grid missions need to have their overlaps defined differently
+  # if it was 26b or 27b and the thin was saved as 95/95, it means it was two sets of 90/90, which really is about 92.5, 92.5
+  # only do what was saved as 80/80, 90/90
+  # what is saved (incorrectly) as 95/95 was two sets of 90/90, and what is saved as 90/90 is really two sets of 80/80
+  # two sets of 80/80 is equiv to 90/80 or 80/90, so put that halfway between
+  # to sets of 90/90 should be halfway between 95/90 and 90/95
+  filter(!(altitude_pitch %in% c("120m_25deg","90m_25deg") & thin_code %in% c("1","2","4","5"))) %>%
+  mutate(oblique = ifelse(altitude_pitch %in% c("120m_25deg","90m_25deg"),TRUE,FALSE)) # this is to keep track so we can adjust the nominal overlap. We need to keeps thins 3 and 6
 
 
 ## make a heatmap plot of f score by vwf x metashape
@@ -92,7 +99,7 @@ ggplot(d_plot,aes(x=set_code,y=config_name,fill=f_score)) +
 
 
 stats_alt_pitch_summ = stats_summ_pre %>%
-  group_by(altitude_pitch, height_cat, tree_position, thin) %>%
+  group_by(altitude_pitch, height_cat, tree_position, thin, oblique) %>%
   summarize(f_config = config_name[which(f_score == quantile(f_score,1))][1],
             meta_config = set_code[which(f_score == quantile(f_score,1))][1],
             f_score = quantile(f_score,1),
@@ -104,20 +111,24 @@ stats_alt_pitch_summ = stats_summ_pre %>%
                                                "90m_25deg")))
 
 stats_alt_pitch_summ_plot = stats_alt_pitch_summ %>%
-  filter(tree_position == "all", height_cat == "10+")
+  filter(tree_position == "single", height_cat == "10+")
 
 
 ## plot
 
 ggplot(stats_alt_pitch_summ_plot, aes(x = thin, y = f_score, color=altitude_pitch)) +
-  geom_line(aes(group=altitude_pitch),size=1) +
+  geom_line(data=stats_alt_pitch_summ_plot %>% filter(!oblique) ,aes(group=altitude_pitch),size=1) +
+  geom_point(data=stats_alt_pitch_summ_plot %>% filter(!oblique),color="grey50") +
+  geom_line(data=stats_alt_pitch_summ_plot %>% filter(oblique), aes(group=altitude_pitch),size=1, position=position_nudge(-1.5)) +
+  geom_point(data=stats_alt_pitch_summ_plot %>% filter(oblique), color="grey50", position=position_nudge(-1.5)) +
   theme_bw(14) +
-  labs(x = "Overlap", y = "F score") +
-  scale_color_viridis_d(end = 0.9)
+  labs(x = "Nominal overlap", y = "F score") +
+  scale_color_viridis_d(end = 0.9) +
+  coord_cartesian(ylim=c(.55,NA))
 
 
 
-#### Get the composite pitch stats ####
+#### !!!! Get the composite pitch stats ####
 
 stats_composite_pitch = stats %>%
   rename(photoset = metashape_run_name_pt1,
@@ -137,22 +148,29 @@ stats_count_unique = stats_composite_pitch %>%
 stats_summ_pre = stats_composite_pitch %>%
   mutate(thin_code = str_sub(metashape_config,3,3) %>% as.numeric,
          set_code = str_sub(metashape_config,4,5) %>% as.numeric) %>%
+  filter(photoset %in% c("paramset31","paramset32")) %>% # composite pitch sets only. !!!! -> For exposure testing, need to change this, and remember the exposure tests are only for subset-area surveys so need to compare against a different baseline (the 14b baseline which is the clipped area version of 14)
   mutate(thin = dplyr::recode(thin_code,
-                              "1" = "90/90",
-                              "2" = "80/80",
+                              "1" = "95/95",
+                              "2" = "90/90",
                               "5" = "95/95",
                               "6" = "90/90",
                               "3" = "95/95-",
                               "4" = "90/90-",
-                              "7" = "90/90"),
+                              "7" = "90/90+"),
          altitude_pitch = recode(photoset,
                                  "paramset31" = "120m_multipitch",
-                                 "paramset32" = "90m_multipitch",
-                                 "paramset41" = "120m_multiexp",
-                                 "paramset14b" = "120m_normalexp",
-                                 "paramset19b" = "120m_lowexp")) %>%
+                                 "paramset32" = "90m_multipitch")) %>%
+                                 #"paramset41" = "120/90m_multiexp",   ## all the rest of these are for exposure testing, but this needs to be done in a separate pipeline once the exposure tests are redone (need to complete the metashape runs for set 43)
+                                 #"paramset42" = "90/120m_multiexp",
+                                 #"paramset43" = "120_multiexp",
+                                 #"paramset14b" = "120m_normalexp")) %>%
+                                 #"paramset19b" = "90m_lowexp",
+                                 #"paramset20b" = "120m_lowexp")) %>%
   filter(height_cat %in% c("10+","20+")) %>%
-  filter(!(thin %in% c("95/95-","90/90-")))
+  filter(!(thin %in% c("95/95-","90/90-","90/90+")))
+  ## 5 is 1121, which is 95/90 + (90/90 + 90/90) = 95/95
+  ## 6 is 2242, which is 90/80 + (80/80 + 80/80) = 90/90
+  ## 7 is 2142, which is 90/80 + (90/80 + 90/80) = 90/90+
 
 
 
@@ -173,13 +191,13 @@ ggplot(d_plot,aes(x=set_code,y=config_name,fill=f_score)) +
 
 
 stats_composite_pitch_summ = stats_summ_pre %>%
-  filter(!(thin == "80/80" & altitude_pitch == "120m_lowexp")) %>%
   group_by(altitude_pitch, height_cat, tree_position, thin) %>%
-  summarize(#f_config = config_name[which(f_score == quantile(f_score,1))][1],
-            #meta_config = set_code[which(f_score == quantile(f_score,1))][1],
+  summarize(f_config = config_name[which(f_score == quantile(f_score,1))][1],
+            meta_config = set_code[which(f_score == quantile(f_score,1))][1],
             f_score = quantile(f_score,1, na.rm=TRUE),
             height_cor = quantile(height_cor,1, na.rm=TRUE),
-            sensitivity = quantile(sensitivity,1, na.rm=TRUE))
+            sensitivity = quantile(sensitivity,1, na.rm=TRUE)) %>%
+  mutate(oblique = FALSE) # this is just for the ones that are full oblique (see where oblique is set to TURE above), not for composites because composite overlaps come out to a round number. This is just for determining whether lines should be shifted in the plot
 
 
 
@@ -188,18 +206,43 @@ stats_composite_pitch_summ = stats_summ_pre %>%
 alt_pitch_p = bind_rows(stats_alt_pitch_summ,
                         stats_composite_pitch_summ %>% filter(altitude_pitch %in% c("120m_multipitch",
                                                                                     "90m_multipitch"))) %>%
-  filter(height_cat == "10+",
-         tree_position == "single") %>%
+  filter(height_cat %in% c("10+", "20+"),
+         tree_position %in% c("single","all")) %>%
+  mutate(height_cat = recode(height_cat,"10+" = "> 10 m",
+                             "20+" = "> 20 m")) %>%
+  mutate(tree_position = recode(tree_position,"single" = "Single trees",
+                                "all" = "All trees")) %>%
+  mutate(height_position = paste(tree_position, height_cat,sep=" ")) %>%
   ## separate altitude and pitch
   separate(altitude_pitch, into = c("altitude","pitch"), sep=fixed("_")) %>%
-  mutate(pitch = factor(pitch,levels=c("nadir","25deg","multipitch")))
+  mutate(pitch = recode(pitch,"25deg" = "oblique",
+                        "multipitch" = "composite")) %>%
+  mutate(pitch = factor(pitch,levels=c("nadir","oblique","composite"))) %>%
+  mutate(alt_pitch = paste(altitude,pitch,sep="_")) %>%
+  mutate(alt_pitch = factor(alt_pitch,levels=c("120m_nadir","120m_oblique","120m_composite","90m_nadir","90m_oblique","90m_composite")))
+  
 
-ggplot(alt_pitch_p, aes(x = thin, y = f_score, color=altitude, linetype = pitch)) +
-  geom_line(aes(group=paste0(altitude,pitch)),size=1) +
+
+p = ggplot(data=alt_pitch_p,mapping=aes(x = thin, y = f_score, color=altitude, linetype = pitch)) +
+  geom_line(data=alt_pitch_p %>% filter(!oblique) ,aes(group=alt_pitch),size=.5) +
+  geom_point(data=alt_pitch_p %>% filter(!oblique),color="grey50") +
+  geom_line(data=alt_pitch_p %>% filter(oblique), aes(group=alt_pitch),size=.5, position=position_nudge(-1.5)) +
+  geom_point(data=alt_pitch_p %>% filter(oblique), color="grey50", position=position_nudge(-1.5)) +
+  # geom_point() +
   theme_bw(14) +
-  labs(x = "Overlap", y = "F score") +
-  scale_color_viridis_d(begin = 0.2, end = 0.8) +
-  scale_linetype_manual(values = c("solid","longdash","dotted"))
+  labs(x = "Nominal overlap", y = "F score") +
+  scale_color_viridis_d(begin = 0.2, end = 0.8,name="Altitude") +
+  scale_linetype_manual(values = c("nadir"= "solid","oblique"= "longdash","composite"= "dotted"), breaks=c("nadir","oblique","composite"), name="Pitch") +
+  coord_cartesian(ylim=c(.55,NA)) +
+  facet_wrap(~height_position) +
+  theme(strip.background = element_rect(fill = 'white', color="white"))
+
+png(data("figures/alt-pitch-overlap.png"),res=200,width=2000,height=1500)
+p
+dev.off()
+
+
+
 
 
 
