@@ -1,5 +1,4 @@
 ## Determine if a ground map tree is considered under another, and store this evaluation in the ground map
-## Function to compare a drone map with a ground map and, ultimately, compare all drone maps in the directory with the ground map
 
 library(tidyverse)
 library(sf)
