@@ -58,4 +58,4 @@ problematic = str_detect(drone_map_files,fixed("paramset27b_152")) | str_detect(
 drone_map_files = drone_map_files[!problematic]
 
 # Run it. Don't need the returned value. It is a record of whether the drone set was skipped because it had an implausible number of trees (or the output already existsed) .
-comparison_plausible = future_map(drone_map_files %>% sample, match_compare_single_wrapper, ground_map = ground_map, .options=future_options(scheduling=5))
+comparison_plausible = future_map(drone_map_files %>% sample, match_compare_single_wrapper, ground_map = ground_map, make_lines_between_matches=TRUE, .options=future_options(scheduling=5))
