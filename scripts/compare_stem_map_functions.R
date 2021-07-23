@@ -255,8 +255,6 @@ calc_match_stats = function(ground_map, drone_map) {
   
   match_stats = bind_rows(over10_match,over20_match,over30_match,over40_match)
   
-  browser()
-  
   # get the height difference of the matched trees
   trees_matched = ground_drone_match %>%
     filter(!is.na(drone_tree_id)) %>%
@@ -421,7 +419,7 @@ make_lines_between_matches = function(ground_map, drone_map, drone_map_name) {
 
 
 ## Function to match and compare a single drone map to the ground map (also make a lines shapefile with connections between trees)
-match_compare_single = function(data_prepped, drone_map_name) {
+match_compare_single = function(data_prepped, drone_map_name, make_lines_between_matches = FALSE) {
   
   cat("Comparing the following to the ground map:",drone_map_name,"\n")
   
@@ -429,15 +427,19 @@ match_compare_single = function(data_prepped, drone_map_name) {
   match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
   match_stats_alltrees$tree_position = "all"
   
-  ## make a shapefile of lines connecting the drone-ground tree pairs
-  #make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_all"))
-  
+  if(make_lines_between_matches) {
+    ## make a shapefile of lines connecting the drone-ground tree pairs
+    make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_all"))
+  }
+    
   ground_map_compared = compare_tree_maps(data_prepped$ground_map  %>% filter(under_neighbor == FALSE), data_prepped$drone_map)
   match_stats_singletrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
   match_stats_singletrees$tree_position = "single"
   
-  ## make a shapefile of lines connecting the drone-ground tree pairs
-  #make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_single"))
+  if(make_lines_between_matches) {
+    ## make a shapefile of lines connecting the drone-ground tree pairs
+    make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_single"))
+  }
   
   plot_stats_alltrees = plot_based_comparison(prepped_ground = data_prepped$ground_map, prepped_drone = data_prepped$drone_map)
   plot_stats_alltrees$tree_position = "all"
@@ -467,7 +469,7 @@ match_compare_single = function(data_prepped, drone_map_name) {
 
 
 
-match_compare_single_wrapper = function(ground_map, drone_map_file) {
+match_compare_single_wrapper = function(ground_map, drone_map_file, make_lines_between_matches = FALSE) {
   
   #cat("running for", drone_map_file, "\n")
   
@@ -522,7 +524,7 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   }
 
   ## Run comparison/eval ##
-  match_compare_single(data_prepped, drone_map_name = drone_map_name)
+  match_compare_single(data_prepped, drone_map_name = drone_map_name, make_lines_between_matches=make_lines_between_matches)
 
   return(TRUE)
   
