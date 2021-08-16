@@ -74,7 +74,7 @@ crop_and_write_las = function(las_file) {
   las = readLAS(las_file)
   las = clip_roi(las,focal_area)
   las = filter_duplicates(las)
-  las = decimate_points(las, homogenize(50,.1))
+  las = decimate_points(las, homogenize(50,1))
   las = normalize_elevation(las = las, algorithm = dtm_interp, na.rm = TRUE)
 
 
