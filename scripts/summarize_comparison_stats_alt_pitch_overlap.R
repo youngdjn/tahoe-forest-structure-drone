@@ -74,8 +74,12 @@ stats_summ_pre = stats_alt_pitch %>%
   # what is saved (incorrectly) as 95/95 was two sets of 90/90, and what is saved as 90/90 is really two sets of 80/80
   # two sets of 80/80 is equiv to 90/80 or 80/90, so put that halfway between
   # to sets of 90/90 should be halfway between 95/90 and 90/95
-  filter(!(altitude_pitch %in% c("120m_25deg","90m_25deg") & thin_code %in% c("1","2","4","5"))) %>%
+  filter(!(altitude_pitch %in% c("120m_25deg","90m_25deg") & thin_code %in% c("1","2","4","5"))) %>% # some of the thins for the oblique missions are not calculated right. Only two match value that can be intuitively named
   mutate(oblique = ifelse(altitude_pitch %in% c("120m_25deg","90m_25deg"),TRUE,FALSE)) # this is to keep track so we can adjust the nominal overlap. We need to keeps thins 3 and 6
+
+# for the oblique sets, need to interpret the thin codes differently than we are for the nadir sets
+stats_summ_pre[stats_summ_pre$altitude_pitch %in% c("120m_25deg","90m_25deg") & stats_summ_pre$thin == "95/95","thin"] = "92.5/92.5"
+stats_summ_pre[stats_summ_pre$altitude_pitch %in% c("120m_25deg","90m_25deg") & stats_summ_pre$thin == "90/90","thin"] = "85/85"
 
 
 ## make a heatmap plot of f score by vwf x metashape
@@ -119,8 +123,8 @@ stats_alt_pitch_summ_plot = stats_alt_pitch_summ %>%
 ggplot(stats_alt_pitch_summ_plot, aes(x = thin, y = f_score, color=altitude_pitch)) +
   geom_line(data=stats_alt_pitch_summ_plot %>% filter(!oblique) ,aes(group=altitude_pitch),size=1) +
   geom_point(data=stats_alt_pitch_summ_plot %>% filter(!oblique),color="grey50") +
-  geom_line(data=stats_alt_pitch_summ_plot %>% filter(oblique), aes(group=altitude_pitch),size=1, position=position_nudge(-1.5)) +
-  geom_point(data=stats_alt_pitch_summ_plot %>% filter(oblique), color="grey50", position=position_nudge(-1.5)) +
+  geom_line(data=stats_alt_pitch_summ_plot %>% filter(oblique), aes(group=altitude_pitch),size=1) +
+  geom_point(data=stats_alt_pitch_summ_plot %>% filter(oblique), color="grey50") +
   theme_bw(14) +
   labs(x = "Nominal overlap", y = "F score") +
   scale_color_viridis_d(end = 0.9) +
@@ -150,13 +154,13 @@ stats_summ_pre = stats_composite_pitch %>%
          set_code = str_sub(metashape_config,4,5) %>% as.numeric) %>%
   filter(photoset %in% c("paramset31","paramset32")) %>% # composite pitch sets only. !!!! -> For exposure testing, need to change this, and remember the exposure tests are only for subset-area surveys so need to compare against a different baseline (the 14b baseline which is the clipped area version of 14)
   mutate(thin = dplyr::recode(thin_code,
-                              "1" = "95/95",
-                              "2" = "90/90",
+                              "1" = "obsolete",# "95/95", # for the obsolete ones the overlap wasn't calculated right and didn't come out to a round number
+                              "2" = "obsolete",# "90/90",
                               "5" = "95/95",
                               "6" = "90/90",
-                              "3" = "95/95-",
-                              "4" = "90/90-",
-                              "7" = "90/90+"),
+                              "3" = "obsolete",# "95/95-",
+                              "4" = "obsolete",# "90/90-",
+                              "7" = "obsolete"),# "90/90+"),
          altitude_pitch = recode(photoset,
                                  "paramset31" = "120m_multipitch",
                                  "paramset32" = "90m_multipitch")) %>%
@@ -167,7 +171,7 @@ stats_summ_pre = stats_composite_pitch %>%
                                  #"paramset19b" = "90m_lowexp",
                                  #"paramset20b" = "120m_lowexp")) %>%
   filter(height_cat %in% c("10+","20+")) %>%
-  filter(!(thin %in% c("95/95-","90/90-","90/90+")))
+  filter(!(thin %in% c("95/95-","90/90-","90/90+","obsolete")))
   ## 5 is 1121, which is 95/90 + (90/90 + 90/90) = 95/95
   ## 6 is 2242, which is 90/80 + (80/80 + 80/80) = 90/90
   ## 7 is 2142, which is 90/80 + (90/80 + 90/80) = 90/90+
@@ -224,20 +228,22 @@ alt_pitch_p = bind_rows(stats_alt_pitch_summ,
 
 
 p = ggplot(data=alt_pitch_p,mapping=aes(x = thin, y = f_score, color=altitude, linetype = pitch)) +
-  geom_line(data=alt_pitch_p %>% filter(!oblique) ,aes(group=alt_pitch),size=.5) +
-  geom_point(data=alt_pitch_p %>% filter(!oblique),color="grey50") +
-  geom_line(data=alt_pitch_p %>% filter(oblique), aes(group=alt_pitch),size=.5, position=position_nudge(-1.5)) +
-  geom_point(data=alt_pitch_p %>% filter(oblique), color="grey50", position=position_nudge(-1.5)) +
+  geom_line(data=alt_pitch_p,aes(group=alt_pitch),size=.5) +
+  geom_point(data=alt_pitch_p,color="grey50") +
   # geom_point() +
-  theme_bw(14) +
-  labs(x = "Nominal overlap", y = "F score") +
-  scale_color_viridis_d(begin = 0.2, end = 0.8,name="Altitude") +
+  theme_bw(12) +
+  labs(x = "Nominal overlap (front/side) (%)", y = "F score") +
+  scale_color_viridis_d(begin = 0.2, end = 0.7,name="Altitude") +
   scale_linetype_manual(values = c("nadir"= "solid","oblique"= "longdash","composite"= "dotted"), breaks=c("nadir","oblique","composite"), name="Pitch") +
   coord_cartesian(ylim=c(.55,NA)) +
   facet_wrap(~height_position) +
-  theme(strip.background = element_rect(fill = 'white', color="white"))
+  theme(strip.background = element_rect(fill = 'white', color="white"),
+        strip.text = element_text(size=11),
+        axis.text = element_text(size=10),
+        axis.title = element_text(size=12),
+        axis.text.x = element_text(angle=45,hjust=1))
 
-png(data("figures/alt-pitch-overlap.png"),res=200,width=2000,height=1500)
+png(data("figures/alt-pitch-overlap.png"),res=220,width=1800,height=1200)
 p
 dev.off()
 
