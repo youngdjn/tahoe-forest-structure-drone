@@ -177,13 +177,13 @@ ggarrange(p_a,p_b,p_c,ncol=1)
 
 
 
-#### Make a more detailed version of the F-score heatmap, with meaningful facets. Repeate for each tree stature category panel (a,b,c,d) ####
+#### Make a more detailed version of the F-score heatmap, with meaningful facets. Repeat for each tree stature category panel (a,b,c,d) ####
 
 
 d_plot = stats_summ %>%
   filter(metric == "f_score") %>%
   filter(height_cat == "20+",
-         tree_position == "all") %>%
+         tree_position == "single") %>%
   group_by(metashape_config,metric,photoset) %>%
   summarize(value = max(value),
             cfg_num = cfg_num[which(value == quantile(value,1))][1])
@@ -208,17 +208,17 @@ p = ggplot(d_plot2,aes(y=depth_qual,x=align_qual,fill=value)) +
   geom_text(aes(label=cfg_num), size=3) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         ) +
-  scale_fill_viridis(name="Mean F", labels = function(x) sprintf("%.2f", x)) +
+  scale_fill_viridis(name="F score", labels = function(x) sprintf("%.2f", x)) +
   facet_grid(altitude~depth_filter) +
   labs(x="Alignment quality",
        y="Dense cloud quality",
-       title = "c) All trees > 20 m") +
+       title = "(d) Single trees > 20 m") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank()) +
   scale_x_discrete(expand=c(0,0)) +
   scale_y_discrete(expand=c(0,0))
 
-png(data("figures/meta-params_20all.png"),res=200,width=800,height=570)
+png(data("figures/meta-params_20single.png"),res=200,width=800,height=570)
 p
 dev.off()
 
