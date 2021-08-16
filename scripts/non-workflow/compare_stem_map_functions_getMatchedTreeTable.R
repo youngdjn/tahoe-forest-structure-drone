@@ -197,7 +197,7 @@ get_slope = function(y,x) {
 
 ## which drone trees are matched to a ground tree?
 # get which ground tree they're matched to
-calc_match_stats = function(ground_map, drone_map) {
+calc_match_stats = function(ground_map, drone_map, tree_position, drone_map_name) {
   
   ground_map_simple = ground_map %>%
     select(ground_tree_id, final_drone_map_match_id, ground_tree_height = Height, ground_tree_internal_area = internal_area) %>%
@@ -255,14 +255,13 @@ calc_match_stats = function(ground_map, drone_map) {
   
   match_stats = bind_rows(over10_match,over20_match,over30_match,over40_match)
   
-  browser()
-  
   # get the height difference of the matched trees
   trees_matched = ground_drone_match %>%
     filter(!is.na(drone_tree_id)) %>%
     mutate(height_err = drone_tree_height - ground_tree_height)
   
-write_csv(trees_matched,"~/Documents/temp/trees_matched.csv")
+  write_csv(trees_matched,data(paste0("drone_map_evals/matched_tree_lists/trees_matched_", drone_map_name,"_",tree_position,".csv")))
+  
   
   over10trees = trees_matched %>%
     filter(ground_tree_height >= 10) %>%
@@ -428,18 +427,18 @@ match_compare_single = function(data_prepped, drone_map_name) {
   cat("Comparing the following to the ground map:",drone_map_name,"\n")
   
   ground_map_compared = compare_tree_maps(data_prepped$ground_map, data_prepped$drone_map)
-  match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
+  match_stats_alltrees = calc_match_stats(ground_map_compared,data_prepped$drone_map,tree_position="all", drone_map_name=drone_map_name)
   match_stats_alltrees$tree_position = "all"
   
   ## make a shapefile of lines connecting the drone-ground tree pairs
-  #make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_all"))
+  make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_all"))
   
   ground_map_compared = compare_tree_maps(data_prepped$ground_map  %>% filter(under_neighbor == FALSE), data_prepped$drone_map)
-  match_stats_singletrees = calc_match_stats(ground_map_compared,data_prepped$drone_map)
+  match_stats_singletrees = calc_match_stats(ground_map_compared,data_prepped$drone_map,tree_position="single", drone_map_name=drone_map_name)
   match_stats_singletrees$tree_position = "single"
   
   ## make a shapefile of lines connecting the drone-ground tree pairs
-  #make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_single"))
+  make_lines_between_matches(ground_map_compared, data_prepped$drone_map, paste0(drone_map_name,"_single"))
   
   plot_stats_alltrees = plot_based_comparison(prepped_ground = data_prepped$ground_map, prepped_drone = data_prepped$drone_map)
   plot_stats_alltrees$tree_position = "all"
@@ -529,4 +528,53 @@ match_compare_single_wrapper = function(ground_map, drone_map_file) {
   return(TRUE)
   
 }
+
+
+
+
+
+#### Load and clean ground map data ####
+ground_map = st_read(data("ground_truth_stem_map/rectified/ept_trees_01_rectified.geojson")) %>% st_transform(3310)
+ground_map$ground_tree_id = 1:nrow(ground_map)
+ground_map$final_drone_map_match_id = NA
+
+# remove some duplicate trees
+ground_map = ground_map %>%
+  filter(!(tree_id %in% c(237, 1268, 2491, 2490, 1901)))
+
+# correct a height typo
+ground_map[ground_map$tree_id == 668,"Height"] = 36.4
+
+
+#### Constants ####
+search_distance_fun = function(x) { 1 + 0.1 * x}
+# previously: search_distance_fun = function(x) { 4 }
+search_distance = search_distance_fun(40) # this is used for buffering in and out of the stand to look for perimeter trees
+search_height_proportion = .50
+# previously: search_height_proportion = .3
+smallest_size = 10 # smallest tree size to include in a size class for comparison
+
+#### Filter ground map data to only trees within the height search distance of the smallest size category (here hard-coded as 10 m)
+ground_map = ground_map %>%
+  filter(Height >= (smallest_size-smallest_size*search_height_proportion))
+
+
+#### Load drone data ####
+
+### Get all file names
+drone_map_files = list.files(data("detected_trees"), pattern="paramset.*\\.geojson", full.names = TRUE)
+
+
+# make output directory if it doesn't exist
+dir.create(data("drone_map_evals/individual"))
+dir.create(data("drone_map_evals/stem_map_pairing_lines"))
+dir.create(data("drone_map_evals/matched_tree_lists"))
+
+## Remove the files that are problematic
+problematic = str_detect(drone_map_files,fixed("paramset27b_152")) | str_detect(drone_map_files,fixed("paramset27b_15016")) | str_detect(drone_map_files,fixed("paramset26b_15211"))
+drone_map_files = drone_map_files[!problematic]
+
+# Run it. Don't need the returned value. It is a record of whether the drone set was skipped because it had an implausible number of trees (or the output already existsed) .
+comparison_plausible = map(drone_map_files %>% sample, match_compare_single_wrapper, ground_map = ground_map)
+
 
