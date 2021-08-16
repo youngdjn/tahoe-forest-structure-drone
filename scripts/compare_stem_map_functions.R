@@ -14,7 +14,7 @@ source(here("scripts/convenience_functions.R"))
 #### Comparison ####
 
 
-## For each ground-truth tree, get the closest drone tree within 5 m distance and 2 m height
+## For each ground-truth tree, get the closest drone tree within x distance and x height
 
 get_closest_tree = function(ground_tree_index, ground_map, drone_map, dist_mat) {
 
