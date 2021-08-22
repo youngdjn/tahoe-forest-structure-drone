@@ -81,6 +81,8 @@ stats_summ_pre = stats_alt_pitch %>%
 stats_summ_pre[stats_summ_pre$altitude_pitch %in% c("120m_25deg","90m_25deg") & stats_summ_pre$thin == "95/95","thin"] = "92.5/92.5"
 stats_summ_pre[stats_summ_pre$altitude_pitch %in% c("120m_25deg","90m_25deg") & stats_summ_pre$thin == "90/90","thin"] = "85/85"
 
+stats_summ_pre_noncomposite = stats_summ_pre
+
 
 ## make a heatmap plot of f score by vwf x metashape
 
@@ -132,6 +134,8 @@ ggplot(stats_alt_pitch_summ_plot, aes(x = thin, y = f_score, color=altitude_pitc
 
 
 
+
+
 #### !!!! Get the composite pitch stats ####
 
 stats_composite_pitch = stats %>%
@@ -144,6 +148,17 @@ stats_composite_pitch = stats %>%
 stats_count_unique = stats_composite_pitch %>%
   group_by(config_name,photoset,metashape_config,tree_position,height_cat) %>%
   summarize(n = n())
+
+
+
+
+
+
+
+
+
+
+
 
 
 #### Get the best metashape paramsets 
@@ -246,6 +261,70 @@ p = ggplot(data=alt_pitch_p,mapping=aes(x = thin, y = f_score, color=altitude, l
 png(data("figures/alt-pitch-overlap.png"),res=220,width=1800,height=1200)
 p
 dev.off()
+
+
+
+
+
+
+#### For each overlap/alt/pitch, get the best meta+vwf by F, the best VWF for Meta16, and specifically m16v196, and get the F score, sens, and prec of each ####
+
+stats_presumm = bind_rows(stats_summ_pre_noncomposite,stats_summ_pre)
+
+# get the best Fs by group
+stats_best_fs = stats_presumm %>%
+  group_by(altitude_pitch, height_cat, tree_position, thin) %>%
+  summarize(max_f = max(f_score),
+            max_m16_f = max(f_score[set_code == 16]),
+            max_m16v196_f = max(f_score[set_code == 16 & config_name == "vwf_196"]))
+
+# bring the max numbers into the main table to test if a given row is the max row
+stats_presumm = left_join(stats_presumm,stats_best_fs) %>%
+  mutate(is_max_f = (f_score == max_f),
+         is_max_m16_f = (f_score == max_m16_f),
+         is_max_m16v196_f = (f_score == max_m16v196_f))
+
+stats_table = stats_presumm %>%
+  group_by(altitude_pitch, height_cat, tree_position, thin) %>%
+  summarize(max_f_meta = str_flatten(set_code[is_max_f],collapse=", "),
+            max_f_detection = str_flatten(config_name[is_max_f],collapse=", "),
+            max_f_f = str_flatten(f_score[is_max_f],collapse=", "),
+            max_f_sens = str_flatten(sensitivity[is_max_f],collapse=", "),
+            max_f_prec = str_flatten(precision[is_max_f],collapse=", "),
+            
+            max_m16_f_detection = str_flatten(config_name[is_max_m16_f & set_code == "16"],collapse=", "),
+            max_m16_f_f = str_flatten(f_score[is_max_m16_f & set_code == "16"],collapse=", "),
+            max_m16_f_sens = str_flatten(sensitivity[is_max_m16_f & set_code == "16"],collapse=", "),
+            max_m16_f_prec = str_flatten(precision[is_max_m16_f & set_code == "16"],collapse=", "),
+            
+            max_m16v196_f_f = str_flatten(f_score[is_max_m16v196_f & set_code == "16" & config_name == "vwf_196"],collapse=", "),
+            max_m16v196_f_sens = str_flatten(sensitivity[is_max_m16v196_f & set_code == "16" & config_name == "vwf_196"],collapse=", "),
+            max_m16v196_f_prec = str_flatten(precision[is_max_m16v196_f & set_code == "16" & config_name == "vwf_196"],collapse=", ")
+            
+            ) %>%
+  filter(height_cat %in% c("10+", "20+"),
+         tree_position %in% c("single","all")) %>%
+  mutate(height_cat = recode(height_cat,"10+" = "> 10 m",
+                             "20+" = "> 20 m")) %>%
+  # mutate(tree_position = recode(tree_position,"single" = "Single trees",
+  #                               "all" = "All trees")) %>%
+  #mutate(height_position = paste(tree_position, height_cat,sep=" ")) %>%
+  ## separate altitude and pitch
+  separate(altitude_pitch, into = c("altitude","pitch"), sep=fixed("_")) %>%
+  mutate(pitch = recode(pitch,"25deg" = "oblique",
+                        "multipitch" = "composite")) %>%
+  mutate(pitch = factor(pitch,levels=c("nadir","oblique","composite"))) %>%
+  #mutate(alt_pitch = paste(altitude,pitch,sep="_")) %>%
+  #mutate(alt_pitch = factor(alt_pitch,levels=c("120m_nadir","120m_oblique","120m_composite","90m_nadir","90m_oblique","90m_composite"))) %>%
+  
+  select(thin,pitch,altitude,tree_position,height_cat,everything()) %>%
+  arrange(desc(thin),pitch,altitude,desc(tree_position),desc(height_cat))
+
+write_csv(stats_table,data("tables/f_table.csv"))
+
+
+
+
 
 
 
