@@ -268,7 +268,7 @@ stats
 stats_summ_main = stats_summ %>%
   filter(metashape_config %in% 7:18)  ## look just at the sets with 100 max neighbors, and exclude the ones that are clearly bad (1-6)
 
-### For each height cat and photoset (F and sens), get all sets which are within 5% of the best
+### For each height cat and photoset (F and sens), get all sets which are within 0.005 F
 
 height_positions = c("10+_single","10+_all","20+_single","20+_all")
 photosets = c("paramset14","paramset15")
@@ -277,6 +277,7 @@ metrics = c("f_score") # ,"sensitivity"
 categories = expand.grid(height_position = height_positions,photoset = photosets,metric = metrics)
 
 good_cfgs = list()
+best_cfgs = list()
 
 for(i in 1:nrow(categories)) {
   
@@ -296,10 +297,25 @@ for(i in 1:nrow(categories)) {
   }
   
   good = stats_summ_foc[stats_summ_foc$value >= min,"metashape_config"] %>% pull() %>% as.character %>% as.numeric 
-  
   good_cfgs[[i]] = good
+  
+  best = stats_summ_foc[stats_summ_foc$value == max,"metashape_config"] %>% pull() %>% as.character %>% as.numeric 
+  best_cfgs[[i]] = best
 
 }
+
+# turn the best config vector into a character string
+good_str = map(good_cfgs,str_flatten,collapse=", ") %>% unlist
+categories$best_meta_list = good_str
+
+categories = categories %>%
+  separate(height_position,into=c("height","position"),sep="_") %>%
+  mutate(altitude = recode(photoset,"paramset14" = "120",
+                           "paramset15" = "90")) %>%
+  select(altitude, height, position,best_meta_list)
+
+write_csv(categories,data("tables/best_metashape_paramset_list.csv"))
+
 
 ## Select the config found in the most categories
 ## Which categories still need to be satisfied?
@@ -382,7 +398,7 @@ stats_main = stats_main %>%
 height_cats = c("10+", "20+")
 tree_positions = c("single", "all")
 photosets = c("paramset14","paramset15")
-metrics = c("f_score","sensitivity") #,"sensitivity"
+metrics = c("f_score") #,"sensitivity"
 metashape_configs = c(9, 11, 15, 16)
 
 categories = expand.grid(height_cat = height_cats, tree_position = tree_positions,photoset = photosets,metric = metrics, metashape_config = metashape_configs)
@@ -413,6 +429,17 @@ for(i in 1:nrow(categories)) {
   
 }
 
+
+# turn the best config vector into a character string
+good_str = map(good_cfgs,str_flatten,collapse=", ") %>% unlist
+categories$best_meta_list = good_str
+
+categories = categories %>%
+  mutate(altitude = recode(photoset,"paramset14" = "120",
+                           "paramset15" = "90")) %>%
+  select(altitude, height_cat, tree_position,metashape_config,best_meta_list)
+
+write_csv(categories,data("tables/best_treedetection_paramset_list.csv"))
 
 
 # Convenience function: which cats still need to be satisfied by selecting a config for them?
