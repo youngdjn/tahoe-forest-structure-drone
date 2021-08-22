@@ -105,6 +105,9 @@ ggplot(d_plot,aes(x=set_code,y=config_name,fill=f_score)) +
 
 
 stats_alt_pitch_summ = stats_summ_pre %>%
+  # ## temporary tweak to generate a version of the overlap figure that uses only meta16, vwf196
+  # filter(config_name == "vwf_196",
+  #        set_code == "16") %>%
   group_by(altitude_pitch, height_cat, tree_position, thin, oblique) %>%
   summarize(f_config = config_name[which(f_score == quantile(f_score,1))][1],
             meta_config = set_code[which(f_score == quantile(f_score,1))][1],
@@ -210,6 +213,9 @@ ggplot(d_plot,aes(x=set_code,y=config_name,fill=f_score)) +
 
 
 stats_composite_pitch_summ = stats_summ_pre %>%
+  # ## temporary tweak to generate a version of the overlap figure that uses only meta16, vwf196
+  # filter(config_name == "vwf_196",
+  #        set_code == "16") %>%
   group_by(altitude_pitch, height_cat, tree_position, thin) %>%
   summarize(f_config = config_name[which(f_score == quantile(f_score,1))][1],
             meta_config = set_code[which(f_score == quantile(f_score,1))][1],
