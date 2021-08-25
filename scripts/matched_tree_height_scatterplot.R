@@ -73,13 +73,13 @@ p = ggplot(d2,aes(x=ground_tree_height,y=drone_tree_height)) +
   theme_bw() + 
   annotate(
     geom = "text", x = 6, y = 48, 
-    label = expression(R^2:~0.96), size = 3.5, hjust=0) + 
+    label = expression(R^2:~0.95), size = 3.5, hjust=0) + 
   annotate(
     geom = "text", x = 6, y = 43, 
-    label = expression(Bias:~"-1.00 m"), size = 3.5, hjust=0) + 
+    label = expression(Bias:~"-0.86 m"), size = 3.5, hjust=0) + 
   annotate(
     geom = "text", x = 6, y = 38, 
-    label = expression(MAE:~"1.73 m"), size = 3.5, hjust=0)
+    label = expression(MAE:~"1.82 m"), size = 3.5, hjust=0)
 p
 
 png(data("figures/trees_height_match.png"), res=210,width=510*1.2,height=500*1.2)
@@ -88,12 +88,17 @@ dev.off()
 
 
 d2 = d2 %>%
-  mutate(bias=drone_tree_height-ground_tree_height)
+  mutate(bias=drone_tree_height-ground_tree_height) %>%
+  mutate(err_pct = (drone_tree_height-ground_tree_height)/ground_tree_height)
+
+mean(abs(d2$err_pct))
+
 
 mean_bias2 = mean(d2$bias)
 mean_abs_err2 = mean(abs(d2$bias))
 mean_bias2
 mean_abs_err2
+cor(d2$ground_tree_height,d2$drone_tree_height) ^ 2
 
 mean_bias
 mean_abs_err
@@ -119,11 +124,13 @@ g = st_intersection(g,foc)
 g2 = g %>%
   filter(Height > 10)
 
+g3 = g %>%
+  filter(Height > 15)
 
+table(g3$Species) %>% sort
 
-ggplot(g,aes(x=DBH,y=Height)) +
-  geom_point() +
-  geom_smooth(method = "lm")
+ggplot(g,aes(x=DBH,y=Height, color=Species)) +
+  geom_point()
 
 newdat = data.frame(DBH=0)
 predict(m,newdat)
