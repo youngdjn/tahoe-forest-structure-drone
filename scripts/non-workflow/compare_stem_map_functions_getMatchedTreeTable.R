@@ -9,6 +9,8 @@ library(here)
 
 source(here("scripts/convenience_functions.R"))
 
+data_dir = readLines(here("data_dir.txt"), n=1)
+
 
 
 #### Comparison ####
@@ -200,7 +202,7 @@ get_slope = function(y,x) {
 calc_match_stats = function(ground_map, drone_map, tree_position, drone_map_name) {
   
   ground_map_simple = ground_map %>%
-    select(ground_tree_id, final_drone_map_match_id, ground_tree_height = Height, ground_tree_internal_area = internal_area) %>%
+    select(ground_tree_id, final_drone_map_match_id, ground_tree_height = Height, ground_tree_internal_area = internal_area, ground_tree_status = Status) %>%
     mutate(ground_tree_internal_area = as.vector(ground_tree_internal_area))
   drone_map_simple = drone_map %>%
     select(drone_tree_id, drone_tree_height = height, drone_tree_internal_area = internal_area) %>%

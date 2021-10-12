@@ -56,21 +56,33 @@ d2 = d2 %>%
   filter(treeID %in% unique(d$drone_tree_id))
 
 # extract height
-chm = raster(data("metashape_outputs_postprocessed/chm/paramset14_1016_20201021T0648_dsm_chm.tif"))
+#chm = raster(data("metashape_outputs_postprocessed/chm/paramset14_1016_20201021T0648_dsm_chm.tif"))
 #chm = raster(data("metashape_outputs_postprocessed/chm/paramset14_016_20201021T0648_dsm_chm.tif"))
+chm = raster(data("metashape_outputs_postprocessed/chm/paramset14_15316_20210124T2155_dsm_chm.tif"))
 
 d2$drone_tree_height = extract(chm,d2,method="bilinear")
-d2 = left_join(d2,d %>% dplyr::select(drone_tree_id,ground_tree_height),by=c("treeID" = "drone_tree_id"))
+d2 = left_join(d2,d %>% dplyr::select(drone_tree_id,ground_tree_height,ground_tree_status),by=c("treeID" = "drone_tree_id"))
+
+d2 = d2 %>%
+  mutate(bias=drone_tree_height-ground_tree_height) %>%
+  mutate(ground_tree_status = recode(ground_tree_status,"D"="Dead","L"="Live")) %>%
+  mutate(ground_tree_status = factor(ground_tree_status,levels=c("Live","Dead")))
+
+mean_bias = mean(d2$bias)
+mean_abs_err = mean(abs(d2$bias))
 
 m2 = lm(ground_tree_height~drone_tree_height,data=d2)
 summary(m2)
 
-p = ggplot(d2,aes(x=ground_tree_height,y=drone_tree_height)) +
+p = ggplot(d2,aes(x=ground_tree_height,y=drone_tree_height,color=ground_tree_status)) +
   geom_abline(color="blue") +
   geom_point(size=1) +
   labs(x="Ground-measured height (m)",y="Drone-measured height (m)") +
   ylim(0,50) +
   theme_bw() + 
+  theme(legend.position = c(.8,.2),legend.background = element_blank(),
+        legend.key = element_rect(fill = "transparent"), legend.box.background = element_blank()) +
+  scale_color_manual(values=c("black","grey50"),name="Status") +
   annotate(
     geom = "text", x = 6, y = 48, 
     label = expression(R^2:~0.95), size = 3.5, hjust=0) + 
@@ -106,7 +118,7 @@ mean_abs_err
 
 
 
-
+###########################
 ### Get ground truth data to evaluate allometry
 g = read_excel(data("ground_truth_stem_map/field_data/EPT_tree_data.xlsx")) %>%
   filter(Status == "L")
