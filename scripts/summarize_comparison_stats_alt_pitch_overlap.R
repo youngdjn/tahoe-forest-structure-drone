@@ -105,7 +105,7 @@ ggplot(d_plot,aes(x=set_code,y=config_name,fill=f_score)) +
 
 
 stats_alt_pitch_summ = stats_summ_pre %>%
-  # ## temporary tweak to generate a version of the overlap figure that uses only meta16, vwf196
+  ## temporary tweak to generate a version of the overlap figure that uses only meta16, vwf196
   # filter(config_name == "vwf_196",
   #        set_code == "16") %>%
   group_by(altitude_pitch, height_cat, tree_position, thin, oblique) %>%
@@ -235,7 +235,7 @@ alt_pitch_p = bind_rows(stats_alt_pitch_summ,
          tree_position %in% c("single","all")) %>%
   mutate(height_cat = recode(height_cat,"10+" = "> 10 m",
                              "20+" = "> 20 m")) %>%
-  mutate(tree_position = recode(tree_position,"single" = "Single trees",
+  mutate(tree_position = recode(tree_position,"single" = "Dominant trees",
                                 "all" = "All trees")) %>%
   mutate(height_position = paste(tree_position, height_cat,sep=" ")) %>%
   ## separate altitude and pitch

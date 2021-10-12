@@ -182,7 +182,7 @@ ggarrange(p_a,p_b,p_c,ncol=1)
 
 d_plot = stats_summ %>%
   filter(metric == "f_score") %>%
-  filter(height_cat == "20+",
+  filter(height_cat == "10+",
          tree_position == "single") %>%
   group_by(metashape_config,metric,photoset) %>%
   summarize(value = max(value),
@@ -212,13 +212,13 @@ p = ggplot(d_plot2,aes(y=depth_qual,x=align_qual,fill=value)) +
   facet_grid(altitude~depth_filter) +
   labs(x="Alignment quality",
        y="Dense cloud quality",
-       title = "(d) Single trees > 20 m") +
+       title = "(c) Dominant trees > 10 m") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank()) +
   scale_x_discrete(expand=c(0,0)) +
   scale_y_discrete(expand=c(0,0))
 
-png(data("figures/meta-params_20single.png"),res=200,width=800,height=570)
+png(data("figures/meta-params_10single.png"),res=200,width=800,height=570)
 p
 dev.off()
 
