@@ -1,5 +1,6 @@
 ## To run on cluster
 ### Create alternate versions of CHMs that are downscaled to higher resolution with bilinear interpolation
+### This was formerly done by this script but is now done as a part of crop_and_normalze_dsm.R.
 
 library(raster)
 library(here)

@@ -1,4 +1,4 @@
-## Compile all the individual ground-drone map comparison stats files
+## This script was previously used to identify which VWF tree detection parameter sets to use, but its functionality has been incorporated into the summarize_comparision_stats_*.R scripts.
 
 library(tidyverse)
 library(here)
