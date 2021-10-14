@@ -17,4 +17,4 @@ This is a collection of scripts for evaluating how different drone imagery colle
 ## General code notes
 * All scripts source `scripts/convenience_functions.R`, which provides some convenience functions that are useful across multiple scripts.
 * The scripts are set up to use the directory specified in `data_dir.txt` (in the root repo folder) as the root directory for data files to read and/or write. This functionality (provided by the `here` package combined with the `data()` function definition in `scripts/convenience_functions.R`) allows you to specify data sub-folders as arguments to the `data()` function, which then returns the full absolute system path.
-* Some runnable scripts have a corresponding "functions" script that defines the functions used in the runnable script. These scripts are named the same as the runnable script, with "\_functions" appended at the end of the filename.
+* Some runnable scripts have a corresponding "functions" script that defines the functions used in the runnable script. These scripts are named the same as the runnable script, with "\_functions" appended to the filename.
