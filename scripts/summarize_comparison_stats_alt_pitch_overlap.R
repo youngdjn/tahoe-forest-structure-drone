@@ -246,7 +246,7 @@ alt_pitch_p = bind_rows(stats_alt_pitch_summ,
   mutate(alt_pitch = paste(altitude,pitch,sep="_")) %>%
   mutate(alt_pitch = factor(alt_pitch,levels=c("120m_nadir","120m_oblique","120m_composite","90m_nadir","90m_oblique","90m_composite")))
   
-
+write_csv(alt_pitch_p,data("figures/fig-dataframes/alt_pitch_p.csv"))
 
 p = ggplot(data=alt_pitch_p,mapping=aes(x = thin, y = f_score, color=altitude, linetype = pitch)) +
   geom_line(data=alt_pitch_p,aes(group=alt_pitch),size=.5) +
