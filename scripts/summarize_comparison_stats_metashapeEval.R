@@ -179,6 +179,56 @@ ggarrange(p_a,p_b,p_c,ncol=1)
 
 #### Make a more detailed version of the F-score heatmap, with meaningful facets. Repeat for each tree stature category panel (a,b,c,d) ####
 
+# load Metashape config defs
+metashape_defs = read_csv(data("metashape_config_defs/metashape_config_defs.csv")) %>%
+  mutate(config = as.character(config))
+
+fig_fun = function(d_plot, title) {
+  d_plot2 = left_join(d_plot,metashape_defs,by=c("metashape_config" = "config")) %>%
+    mutate(align_qual = recode(align_photos_downscale,"1"="high","2"="med","4"="low"),
+           depth_qual = recode(depth_map_downscale,"2"="high","4"="med"),
+           depth_filter = recode(depth_map_filter,"moderate"="Depth filter: mod",
+                                 "mild" = "Depth filter: mild"),
+           altitude = recode(photoset,"paramset14" = "Alt: 120 m",
+                             "paramset15" = "Alt: 90 m")) %>%
+    mutate(config_text = paste0("a")) %>%
+    mutate(align_qual = factor(align_qual,c("low","med","high")),
+           depth_qual = factor(depth_qual,c("low","med","high")))
+  
+  textcol = ifelse(title == "(a) All trees > 10 m", "white","black")
+  
+  p = ggplot(d_plot2,aes(y=depth_qual,x=align_qual,fill=value)) +
+    geom_tile() +
+    geom_text(aes(label=cfg_num), size=3, color=textcol) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+          ) +
+    scale_fill_viridis(name="F score", labels = function(x) sprintf("%.2f", x), limits=c(0.64,0.87)) +
+    facet_grid(altitude~depth_filter) +
+    labs(x="Alignment quality",
+         y="Dense cloud quality",
+         title = title) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+            panel.background = element_blank()) +
+    scale_x_discrete(expand=c(0,0)) +
+    scale_y_discrete(expand=c(0,0))
+  
+  return(p)
+}
+
+d_plot = stats_summ %>%
+  filter(metric == "f_score") %>%
+  filter(height_cat == "10+",
+         tree_position == "all") %>%
+  group_by(metashape_config,metric,photoset) %>%
+  summarize(value = max(value),
+            cfg_num = cfg_num[which(value == quantile(value,1))][1])
+
+p = fig_fun(d_plot, "(a) All trees > 10 m")
+
+png(data("figures/meta-params_v2_10all.png"),res=200,width=800,height=570)
+p
+dev.off()
+
 
 d_plot = stats_summ %>%
   filter(metric == "f_score") %>%
@@ -188,37 +238,9 @@ d_plot = stats_summ %>%
   summarize(value = max(value),
             cfg_num = cfg_num[which(value == quantile(value,1))][1])
 
-# load Metashape config defs
-metashape_defs = read_csv(data("metashape_config_defs/metashape_config_defs.csv")) %>%
-  mutate(config = as.character(config))
+p = fig_fun(d_plot, "(c) Dominant trees > 10 m")
 
-d_plot2 = left_join(d_plot,metashape_defs,by=c("metashape_config" = "config")) %>%
-  mutate(align_qual = recode(align_photos_downscale,"1"="high","2"="med","4"="low"),
-         depth_qual = recode(depth_map_downscale,"2"="high","4"="med"),
-         depth_filter = recode(depth_map_filter,"moderate"="Depth filter: mod",
-                               "mild" = "Depth filter: mild"),
-         altitude = recode(photoset,"paramset14" = "Alt: 120 m",
-                           "paramset15" = "Alt: 90 m")) %>%
-  mutate(config_text = paste0("a")) %>%
-  mutate(align_qual = factor(align_qual,c("low","med","high")),
-         depth_qual = factor(depth_qual,c("low","med","high")))
-
-p = ggplot(d_plot2,aes(y=depth_qual,x=align_qual,fill=value)) +
-  geom_tile() +
-  geom_text(aes(label=cfg_num), size=3) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        ) +
-  scale_fill_viridis(name="F score", labels = function(x) sprintf("%.2f", x)) +
-  facet_grid(altitude~depth_filter) +
-  labs(x="Alignment quality",
-       y="Dense cloud quality",
-       title = "(c) Dominant trees > 10 m") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank()) +
-  scale_x_discrete(expand=c(0,0)) +
-  scale_y_discrete(expand=c(0,0))
-
-png(data("figures/meta-params_10single.png"),res=200,width=800,height=570)
+png(data("figures/meta-params_v2_10single.png"),res=200,width=800,height=570)
 p
 dev.off()
 
