@@ -72,14 +72,12 @@ stats_summ_pre = stats_alt_pitch %>%
   # if it was 26b or 27b and the thin was saved as 95/95, it means it was two sets of 90/90, which really is about 92.5, 92.5
   # only do what was saved as 80/80, 90/90
   # what is saved (incorrectly) as 95/95 was two sets of 90/90, and what is saved as 90/90 is really two sets of 80/80
-  # two sets of 80/80 is equiv to 90/80 or 80/90, so put that halfway between
-  # to sets of 90/90 should be halfway between 95/90 and 90/95
   filter(!(altitude_pitch %in% c("120m_25deg","90m_25deg") & thin_code %in% c("1","2","4","5"))) %>% # some of the thins for the oblique missions are not calculated right. Only two match value that can be intuitively named
   mutate(oblique = ifelse(altitude_pitch %in% c("120m_25deg","90m_25deg"),TRUE,FALSE)) # this is to keep track so we can adjust the nominal overlap. We need to keeps thins 3 and 6
 
 # for the oblique sets, need to interpret the thin codes differently than we are for the nadir sets
-stats_summ_pre[stats_summ_pre$altitude_pitch %in% c("120m_25deg","90m_25deg") & stats_summ_pre$thin == "95/95","thin"] = "92.5/92.5"
-stats_summ_pre[stats_summ_pre$altitude_pitch %in% c("120m_25deg","90m_25deg") & stats_summ_pre$thin == "90/90","thin"] = "85/85"
+stats_summ_pre[stats_summ_pre$altitude_pitch %in% c("120m_25deg","90m_25deg") & stats_summ_pre$thin == "95/95","thin"] = "[90/90+90/90]"
+stats_summ_pre[stats_summ_pre$altitude_pitch %in% c("120m_25deg","90m_25deg") & stats_summ_pre$thin == "90/90","thin"] = "[80/80+80/80]"
 
 stats_summ_pre_noncomposite = stats_summ_pre
 
@@ -174,8 +172,8 @@ stats_summ_pre = stats_composite_pitch %>%
   mutate(thin = dplyr::recode(thin_code,
                               "1" = "obsolete",# "95/95", # for the obsolete ones the overlap wasn't calculated right and didn't come out to a round number
                               "2" = "obsolete",# "90/90",
-                              "5" = "95/95",
-                              "6" = "90/90",
+                              "5" = "[90/90+90/90] + 95/90",  # previously 95/95
+                              "6" = "[80/80+80/80] + 90/80",  # previously 90/90
                               "3" = "obsolete",# "95/95-",
                               "4" = "obsolete",# "90/90-",
                               "7" = "obsolete"),# "90/90+"),
@@ -244,27 +242,42 @@ alt_pitch_p = bind_rows(stats_alt_pitch_summ,
                         "multipitch" = "composite")) %>%
   mutate(pitch = factor(pitch,levels=c("nadir","oblique","composite"))) %>%
   mutate(alt_pitch = paste(altitude,pitch,sep="_")) %>%
-  mutate(alt_pitch = factor(alt_pitch,levels=c("120m_nadir","120m_oblique","120m_composite","90m_nadir","90m_oblique","90m_composite")))
+  mutate(alt_pitch = factor(alt_pitch,levels=c("120m_nadir","120m_oblique","120m_composite","90m_nadir","90m_oblique","90m_composite"))) %>%
+  mutate(thin = factor(thin,levels=c("80/80","80/90","[80/80+80/80]","90/80","[80/80+80/80] + 90/80","90/90","90/95","[90/90+90/90]","95/90","[90/90+90/90] + 95/90","95/95"))) %>%
+  mutate(height_position = recode(height_position,"All trees > 10 m" = "a) All trees > 10 m", "All trees > 20 m" = "b) All trees > 20 m", "Dominant trees > 10 m" = "c) Dominant trees > 10 m", "Dominant trees > 20 m" = "d) Dominant trees > 20 m")) %>%
+  mutate(altitude = recode(altitude,"120m" = "120 m", "90m" = "90 m"))
   
 write_csv(alt_pitch_p,data("figures/fig-dataframes/alt_pitch_p.csv"))
 
+linecol = "#c8e0e8"
+linewidth = 1.8
+
 p = ggplot(data=alt_pitch_p,mapping=aes(x = thin, y = f_score, color=altitude, linetype = pitch)) +
+  scale_x_discrete() +
+  # geom_vline(xintercept = 1.5, color=linecol, size=linewidth) +
+  # geom_vline(xintercept = 4.5, color=linecol, size=linewidth) +
+  # geom_vline(xintercept = 6.5, color=linecol, size=linewidth) +
+  # geom_vline(xintercept = 9.5, color=linecol, size=linewidth) +
+  annotate("rect", xmin = 1.7, xmax = 4.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
+  annotate("rect", xmin = 4.7, xmax = 6.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
+  annotate("rect", xmin = 6.7, xmax = 9.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
+  annotate("rect", xmin = 9.7, xmax = 11.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
   geom_line(data=alt_pitch_p,aes(group=alt_pitch),size=.5) +
   geom_point(data=alt_pitch_p,color="grey50") +
   # geom_point() +
   theme_bw(12) +
-  labs(x = "Nominal overlap (front/side) (%)", y = "F score") +
+  labs(x = "Overlap (front/side) (%)", y = "F score") +
   scale_color_viridis_d(begin = 0.2, end = 0.7,name="Altitude") +
   scale_linetype_manual(values = c("nadir"= "solid","oblique"= "longdash","composite"= "dotted"), breaks=c("nadir","oblique","composite"), name="Pitch") +
-  coord_cartesian(ylim=c(.55,NA)) +
+  coord_cartesian(ylim=c(.55,.9)) +
   facet_wrap(~height_position) +
   theme(strip.background = element_rect(fill = 'white', color="white"),
-        strip.text = element_text(size=11),
+        strip.text = element_text(size=11,hjust = 0),
         axis.text = element_text(size=10),
         axis.title = element_text(size=12),
         axis.text.x = element_text(angle=45,hjust=1))
 
-png(data("figures/alt-pitch-overlap.png"),res=220,width=1800,height=1200)
+png(data("figures/alt-pitch-overlap_v3.png"),res=220,width=1800,height=1200*1.1)
 p
 dev.off()
 
