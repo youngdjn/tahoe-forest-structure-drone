@@ -15,6 +15,7 @@ source(here("scripts/convenience_functions.R"))
 
 #### Load data ####
 
+ground_map = st_read(data(("ground_truth_stem_map/rectified/ept_trees_01_rectified_inclSmall.geojson"))) %>% st_transform(3310)
 ground_map = st_read(data("ground_truth_stem_map/rectified/ept_trees_01_rectified.geojson")) %>% st_transform(3310)
 roi = st_read(data("study_area_perimeter/ground_map_mask_precise.geojson")) %>% st_transform(3310)
 
@@ -29,7 +30,13 @@ ground_map[ground_map$tree_id == 668,"Height"] = 36.4
 trees = st_intersection(ground_map,roi)
 
 trees = trees %>%
-  filter(
-         Height > 5)
+  filter(Height > 0,
+         DBH > 7.5,
+         Status == "D")
 
 nrow(trees)
+
+st_geometry(trees) = NULL
+
+st_write(trees,data(("ground_truth_stem_map/rectified/ept_trees_01_rectified_filtered_tabular.csv")))
+
