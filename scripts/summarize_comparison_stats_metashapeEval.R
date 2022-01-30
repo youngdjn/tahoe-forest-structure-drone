@@ -75,6 +75,18 @@ stats = stats %>%
   filter(photoset %in% c("paramset14","paramset15"))
 
 
+
+#### Get a table of F scores for all tree detection methods, for Meta16, 120m, nadir, 90/90
+stats_treedet_table = stats %>%
+  filter(tree_position == "all", height_cat == "10+", photoset == "paramset14", metashape_config == 16) %>%
+  
+  ## merge position and height into a single var, don't filter by them, and make it wide across them x the (f score, sense, prec)
+  
+  arrange(desc(f_score)) %>%
+  select(f_score, sensitivity, precision, config_name, method, everything())
+
+
+
 #### Get the best metashape paramsets 
 
 stats_summ_pre = stats %>%
@@ -195,14 +207,16 @@ fig_fun = function(d_plot, title) {
     mutate(align_qual = factor(align_qual,c("low","med","high")),
            depth_qual = factor(depth_qual,c("low","med","high")))
   
-  textcol = ifelse(title == "(a) All trees > 10 m", "white","black")
+  #textcol = ifelse(title == "(a) All trees > 10 m", "white","black")
+  scalemin = min(d_plot2$value)
+  scalemax = max(d_plot2$value) + 0.001
   
   p = ggplot(d_plot2,aes(y=depth_qual,x=align_qual,fill=value)) +
     geom_tile() +
-    geom_text(aes(label=cfg_num), size=3, color=textcol) +
+    geom_text(aes(label=cfg_num), size=3) +  #, color=textcol
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
           ) +
-    scale_fill_viridis(name="F score", labels = function(x) sprintf("%.2f", x), limits=c(0.64,0.87)) +
+    scale_fill_viridis(name="F score", labels = function(x) sprintf("%.2f", x), begin = 0.2, end = 0.9, limits=c(scalemin,scalemax)) + #, limits=c(0.64,0.87)
     facet_grid(altitude~depth_filter) +
     labs(x="Alignment quality",
          y="Dense cloud quality",
@@ -215,17 +229,18 @@ fig_fun = function(d_plot, title) {
   return(p)
 }
 
+
 d_plot = stats_summ %>%
   filter(metric == "f_score") %>%
-  filter(height_cat == "10+",
-         tree_position == "all") %>%
+  filter(height_cat == "20+",
+         tree_position == "single") %>%
   group_by(metashape_config,metric,photoset) %>%
   summarize(value = max(value),
             cfg_num = cfg_num[which(value == quantile(value,1))][1])
 
-p = fig_fun(d_plot, "(a) All trees > 10 m")
+p = fig_fun(d_plot, "(d) Dominant trees > 20 m")
 
-png(data("figures/meta-params_v2_10all.png"),res=200,width=800,height=570)
+png(data("figures/meta-params_v3_20single.png"),res=200,width=800,height=570)
 p
 dev.off()
 
