@@ -77,15 +77,33 @@ stats = stats %>%
 
 
 #### Get a table of F scores for all tree detection methods, for Meta16, 120m, nadir, 90/90
-stats_treedet_table = stats %>%
+stats_treedet_table_1 = stats %>%
+  mutate(method = ifelse(is.na(method), "VWF",method)) %>%
   filter(tree_position == "all", height_cat == "10+", photoset == "paramset14", metashape_config == 16) %>%
-  
-  ## merge position and height into a single var, don't filter by them, and make it wide across them x the (f score, sense, prec)
-  
   arrange(desc(f_score)) %>%
-  select(f_score, sensitivity, precision, config_name, method, everything())
+  select(tree_position,height_cat, config_name, method,f_score, sensitivity, precision)
 
+stats_treedet_table_2 = stats %>%
+  mutate(method = ifelse(is.na(method), "VWF",method)) %>%
+  filter(tree_position == "all", height_cat == "20+", photoset == "paramset14", metashape_config == 16) %>%
+  arrange(desc(f_score)) %>%
+  select(tree_position,height_cat, config_name, method,f_score, sensitivity, precision)
 
+stats_treedet_table_3 = stats %>%
+  mutate(method = ifelse(is.na(method), "VWF",method)) %>%
+  filter(tree_position == "single", height_cat == "10+", photoset == "paramset14", metashape_config == 16) %>%
+  arrange(desc(f_score)) %>%
+  select(tree_position,height_cat, config_name, method,f_score, sensitivity, precision)
+
+stats_treedet_table_4 = stats %>%
+  mutate(method = ifelse(is.na(method), "VWF",method)) %>%
+  filter(tree_position == "single", height_cat == "20+", photoset == "paramset14", metashape_config == 16) %>%
+  arrange(desc(f_score)) %>%
+  select(tree_position,height_cat, config_name, method,f_score, sensitivity, precision)
+
+stats_treedet_table = bind_cols(stats_treedet_table_1,stats_treedet_table_2,stats_treedet_table_3,stats_treedet_table_4)
+
+write_csv(stats_treedet_table, data("tables/all_treedet_scores.csv"))
 
 #### Get the best metashape paramsets 
 
