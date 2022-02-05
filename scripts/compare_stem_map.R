@@ -1,4 +1,5 @@
-## Function to compare a drone map with a ground map and, ultimately, compare all drone maps in the directory with the ground map
+## Compare all drone maps in a directory with the ground reference map and compute validation metrics
+## This script relies on functions defined in compare_stem_map_functions.R
 
 library(tidyverse)
 library(sf)
