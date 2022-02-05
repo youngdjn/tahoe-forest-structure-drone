@@ -473,9 +473,9 @@ for(i in 1:nrow(categories)) {
   
   max = max(stats_summ_foc$value)
   if(category$metric == "f_score")  {
-    min = max - 0.01
+    min = max - 0.00
   } else {
-    min = max - 0.1
+    min = max - 0.0
   }
   
   good = stats_summ_foc[stats_summ_foc$value >= min,"config"] %>% pull() %>% as.character
