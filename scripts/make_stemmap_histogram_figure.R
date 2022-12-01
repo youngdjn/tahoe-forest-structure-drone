@@ -28,10 +28,11 @@ d = d %>%
 p = ggplot(d,aes(x=Height,fill=Species_coarse)) +
   geom_histogram(breaks = c(5,10,15,20,25,30,35,40,45)) +
   scale_fill_viridis_d(name = "Species") +
-  theme_bw(16) +
-  labs(x = "Height (m)", y = "Tree count")
+  theme_bw(15) +
+  labs(x = "Tree height (m)", y = "Tree count") +
+  theme(legend.position = c(0.70, 0.68), legend.background = element_rect(fill=NA))
 
-png(data("figures/ept_ground_map_histogram.png"), width = 1500, height = 1000, res = 300)
+png(data("figures/ept_ground_map_histogram.png"), width = 1100, height = 1000, res = 300)
 p
 dev.off()
 

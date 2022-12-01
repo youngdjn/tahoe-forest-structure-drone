@@ -254,19 +254,19 @@ linewidth = 1.8
 
 p = ggplot(data=alt_pitch_p,mapping=aes(x = thin, y = f_score, color=altitude, linetype = pitch)) +
   scale_x_discrete() +
-  geom_vline(xintercept = 1.5, color=linecol, size=linewidth) +
-  geom_vline(xintercept = 4.5, color=linecol, size=linewidth) +
-  geom_vline(xintercept = 6.5, color=linecol, size=linewidth) +
-  geom_vline(xintercept = 9.5, color=linecol, size=linewidth) +
-  # annotate("rect", xmin = 1.7, xmax = 4.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
-  # annotate("rect", xmin = 4.7, xmax = 6.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
-  # annotate("rect", xmin = 6.7, xmax = 9.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
-  # annotate("rect", xmin = 9.7, xmax = 11.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
+  # geom_vline(xintercept = 1.5, color=linecol, size=linewidth) +
+  # geom_vline(xintercept = 4.5, color=linecol, size=linewidth) +
+  # geom_vline(xintercept = 6.5, color=linecol, size=linewidth) +
+  # geom_vline(xintercept = 9.5, color=linecol, size=linewidth) +
+  annotate("rect", xmin = 1.7, xmax = 4.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
+  annotate("rect", xmin = 4.7, xmax = 6.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
+  annotate("rect", xmin = 6.7, xmax = 9.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
+  annotate("rect", xmin = 9.7, xmax = 11.3, ymin = -1, ymax = 2, alpha = .1,fill = "blue") +
   geom_line(data=alt_pitch_p,aes(group=alt_pitch),size=.5) +
   geom_point(data=alt_pitch_p,color="grey50") +
   # geom_point() +
   theme_bw(12) +
-  labs(x = "Overlap (front/side) (%)", y = "F score") +
+  labs(x = "Nominal overlap (front/side) (%)", y = "F score") +
   scale_color_viridis_d(begin = 0.2, end = 0.7,name="Altitude") +
   scale_linetype_manual(values = c("nadir"= "solid","oblique"= "longdash","composite"= "dotted"), breaks=c("nadir","oblique","composite"), name="Pitch") +
   coord_cartesian(ylim=c(.55,.9)) +
