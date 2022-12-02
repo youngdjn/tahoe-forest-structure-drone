@@ -15,7 +15,7 @@ data_dir = readLines(here("data_dir.txt"), n=1)
 #### Convenience functions and main functions ####
 
 source(here("scripts/convenience_functions.R"))
-source(here("scripts/tree_detection/vwf_functions.R"))
+source(here("scripts/tree-detection/vwf_functions.R"))
 
 
 
