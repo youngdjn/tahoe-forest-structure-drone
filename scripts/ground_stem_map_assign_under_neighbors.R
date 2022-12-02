@@ -1,4 +1,4 @@
-## Determine if a ground map tree is considered under another, and store this evaluation in the ground map
+## Determine if a ground map tree is considered under another, and store this evaluation in the ground map in the attribute `under_neighbor`
 
 library(tidyverse)
 library(sf)

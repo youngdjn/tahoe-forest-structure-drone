@@ -97,7 +97,7 @@ area_based_based_comparison <- function(observed_trees,
 # Function reads the location of the ground truth (
 # ground_map_file) and input TAO dataset (drone_map_file)
 # Takes in input from user whether the ground truth dataset has
-# identification of trees as dominant or understory (canopy_position_info)
+# identification of trees as dominant or understory (additional_overstory_comparison)
 # Reads user input on the size of the virtual plot in metres.
 # Calculates the area based statistics
 # Saves the output as CSV in 'interim_files' folder
@@ -106,7 +106,7 @@ area_based_stats <- function(observed_trees_filepath,  # The ground-reference st
                              predicted_trees_filepath, # The predicted trees map (gpkg) that has been prepped by the `prep_tree_maps` function
                              focal_region_polygon_filepath,    # The focal region within which to compare observed and predicted tree densities
                              virtual_plot_size,                # The size (sides of a square, in m) of plots that we impose on the ground to compute area-based stats in comparing the ground map and the tree map
-                             canopy_position_info,               # Boolean for whether or not the prepped observed tree map gpkg contains an attribute "under_neighbor" to indicate whether a tree is overstory or understory (added by the prep_tree_maps function based on tree proximity and relative height)
+                             additional_overstory_comparison,               # Boolean for whether or not the prepped observed tree map gpkg contains an attribute "under_neighbor" to indicate whether a tree is overstory or understory (added by the prep_tree_maps function based on tree proximity and relative height)
                              tmp_dir) {
     # read in data files
     observed_trees <- st_read(observed_trees_filepath)
@@ -131,7 +131,7 @@ area_based_stats <- function(observed_trees_filepath,  # The ground-reference st
     area_based_stats_all$canopy_position <- "all"
     
     
-    if (canopy_position_info) {
+    if (additional_overstory_comparison) {
       
       area_based_stats_overstory <- area_based_based_comparison(
             observed_trees %>% filter(under_neighbor == FALSE),
