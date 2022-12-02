@@ -225,6 +225,61 @@ match_trees <- function(observed_trees_filepath,
       tmp_dir,
       paste0(predicted_tree_dataset_name, "_matched_overstory.gpkg")
     )
+  
+  
+  # Faster tree matching logic
+  # 
+  # for each observed tree, compute distance to every predicted tree that is a candidate:
+  #   within distance window function scaled by height of the observed tree
+  # within height window range based on height of the observed tree
+  # 
+  # Logic:
+  #   
+  #   compute distance matrix for all observed to all predicted
+  # Thin to only those distances within the radius for the tallest trees
+  # 
+  # for each observed point:
+  #   compute its acceptable distance and height interval
+  # thin to only points within the height interval
+  # find all points within its acceptable horizontal distance
+  # 
+  # This produces a df of all the potential matches between predicteds and observeds, with their distances
+  # 
+  # Find the closest matches:
+  #   Sort the matches list in ascending order
+  # For each potential match:
+  #   see if the predicted or observed is already matched (keep a running list)
+  # if not, record the match, and add the predicted and observed IDs to the already-matched pool
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
   # Run compare_tree_maps functions based on the tree category
   # information for validation dataset
