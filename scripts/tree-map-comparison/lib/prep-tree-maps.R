@@ -5,10 +5,9 @@
 # - adding an (empty for now) attribute that will store which predicted tree the observed tree is matched to
 # It modifies the original files provided to it.
 
-prep_tree_maps_for_comparison = function(observed_trees_filepath,
-                                             predicted_trees_filepath,
-                                             plot_bound_filepath,
-                                             internal_plot_buffer_dist) {
+prep_observed_tree_map_for_comparison = function(observed_trees_filepath,
+                                                 plot_bound_filepath,
+                                                 internal_plot_buffer_dist) {
   
   # Load field plot boundary and buffer it in so we have a way of spatially subsetting our predicted tree dataset to a region
   #    where all predicted trees have a fair chance of matching to an observed tree, allowing for some spatial error.
@@ -31,6 +30,24 @@ prep_tree_maps_for_comparison = function(observed_trees_filepath,
   # Add an (empty for now) attribute that will store which predicted tree the observed tree is matched to
   observed_trees$final_predicted_tree_match_id = NA
   
+  st_write(observed_trees, observed_trees_filepath, delete_dsn = TRUE)
+  
+}
+
+
+
+prep_predicted_tree_map_for_comparison = function(observed_trees_filepath,
+                                                  predicted_trees_filepath,
+                                                  plot_bound_filepath,
+                                                  internal_plot_buffer_dist) {
+  
+  # Load field plot boundary and buffer it in so we have a way of spatially subsetting our predicted tree dataset to a region
+  #    where all predicted trees have a fair chance of matching to an observed tree, allowing for some spatial error.
+  #    Because observed trees are from a limited area, we need to be able to subset the predicted trees to a *more* limited area
+  plot_bound = st_read(plot_bound_filepath)
+  plot_bound_internal = plot_bound %>% st_transform(3310) %>% st_buffer(-internal_plot_buffer_dist) %>%
+    mutate(internal_area = TRUE)
+  
   ### Read in predicted (drone-detected) trees and prepare them for comparison to observed trees ###
   #      Project them to the observed trees dataset projection, and assign them unique IDs
   predicted_trees = st_read(predicted_trees_filepath) %>%
@@ -52,6 +69,6 @@ prep_tree_maps_for_comparison = function(observed_trees_filepath,
   
   ## Write them both back to their originals
   st_write(predicted_trees, predicted_trees_filepath, delete_dsn = TRUE)
-  st_write(observed_trees, observed_trees_filepath, delete_dsn = TRUE)
   
 }
+

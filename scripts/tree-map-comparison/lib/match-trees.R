@@ -89,7 +89,7 @@ match_trees_singlestratum = function(observed_trees,
   }
   
   return(observed_trees)
-
+  
 }
 
 
@@ -103,7 +103,6 @@ match_trees <- function(observed_trees_filepath,
                         tmp_dir,
                         search_distance_fun_slope,
                         search_distance_fun_intercept) {
-  
   
   observed_trees = st_read(observed_trees_filepath)
   predicted_trees = st_read(predicted_trees_filepath)
@@ -150,5 +149,5 @@ match_trees <- function(observed_trees_filepath,
     st_write(matched_observed_trees_overstory, tmp_gpkg_filename_overstory, delete_dsn = TRUE)
     
   }
-
+  
 }

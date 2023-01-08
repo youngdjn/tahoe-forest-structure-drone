@@ -17,7 +17,7 @@ write_csv_to_dir = function(dataframe, output_dir, output_filename) {
 # Function computes the slope b by fitting the equation Y = a + bX
 # using OLS.
 get_slope <- function(y, x) {
-  if (length(x) == 0) {
+  if (length(x) == 0 | length(y) == 0) {
     return(NA)
   }
   m <- lm(y ~ x)
@@ -168,59 +168,59 @@ calc_match_stats <- function(observed_trees,
 # Saves the output as CSV in 'interim_files' folder
 
 tree_det_stats <- function(tmp_dir,
-                                predicted_trees_filepath,
-                                output_dir) {
+                           predicted_trees_filepath,
+                           output_dir) {
   
-    # Create output and temp dirs if they don't exist
-    dir.create(tmp_dir)
-    dir.create(output_dir)
+  # Create output and temp dirs if they don't exist
+  dir.create(tmp_dir)
+  dir.create(output_dir)
   
-    predicted_trees <- st_read(predicted_trees_filepath)
-
-    predicted_tree_dataset_name <-
-        tools::file_path_sans_ext(basename(predicted_trees_filepath))
-
-    # Collect the predicted tree GPKGs (located in the interim files location) from
-    # stem map comparison for all and overstory tree category
-    map_files <- list.files(tmp_dir,
-        full.names = TRUE, pattern = "*.gpkg$"
+  predicted_trees <- st_read(predicted_trees_filepath)
+  
+  predicted_tree_dataset_name <-
+    tools::file_path_sans_ext(basename(predicted_trees_filepath))
+  
+  # Collect the predicted tree GPKGs (located in the interim files location) from
+  # stem map comparison for all and overstory tree category (should be two files)
+  map_files <- list.files(tmp_dir,
+                          full.names = TRUE, pattern = paste0(".*", predicted_tree_dataset_name,".*.gpkg$")
+  )
+  
+  match_stats_i <- list()
+  
+  # This function reads each GPKG and calculates height error
+  # for each matched tree and saves the CSV
+  
+  ind_tree_match_stats_func <- function(i) {
+    matched_observed_trees <- st_read(i)
+    
+    map_file_canopy_position <- sub(
+      ".*_(.*)", "\\1",
+      tools::file_path_sans_ext(basename(i))
     )
-
-    match_stats_i <- list()
-
-    # This function reads each GPKG and calculates height error
-    # for each matched tree and saves the CSV
-
-    ind_tree_match_stats_func <- function(i) {
-        matched_observed_trees <- st_read(i)
-
-        map_file_canopy_position <- sub(
-            ".*_(.*)", "\\1",
-            tools::file_path_sans_ext(basename(i))
-        )
-        
-        calc_match_stats(matched_observed_trees,
-            predicted_trees,
-            predicted_tree_dataset_name = predicted_tree_dataset_name,
-            canopy_position = map_file_canopy_position,
-            output_dir
-        )
-    }
-
-    # 'ind_tree_match_stats_func' function returns a summary of the
-    # individual tree stats i.e., F-score, sensitivity, precision etc
-    # for both all and overstory tree position
-    match_stats_i <- lapply(map_files, ind_tree_match_stats_func)
-
-    # Combine both all and overstory tree stats into one table
-    # and writes out CSV for further processing
-    match_stats <- bind_rows(match_stats_i)
-    write.csv(
-        match_stats,
-        file.path(
-            tmp_dir,
-            paste0(predicted_tree_dataset_name, "_match_stats.csv")
-        )
+    
+    calc_match_stats(matched_observed_trees,
+                     predicted_trees,
+                     predicted_tree_dataset_name = predicted_tree_dataset_name,
+                     canopy_position = map_file_canopy_position,
+                     output_dir
     )
-
+  }
+  
+  # 'ind_tree_match_stats_func' function returns a summary of the
+  # individual tree stats i.e., F-score, sensitivity, precision etc
+  # for both all and overstory tree position
+  match_stats_i <- lapply(map_files, ind_tree_match_stats_func)
+  
+  # Combine both all and overstory tree stats into one table
+  # and writes out CSV for further processing
+  match_stats <- bind_rows(match_stats_i)
+  write.csv(
+    match_stats,
+    file.path(
+      tmp_dir,
+      paste0(predicted_tree_dataset_name, "_match_stats.csv")
+    )
+  )
+  
 }
