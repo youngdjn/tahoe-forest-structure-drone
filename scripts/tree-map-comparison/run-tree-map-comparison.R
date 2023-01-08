@@ -35,12 +35,17 @@ output_dir = datadir("comparison-output")
 
 #### BEGIN STEM MAP COMPARISON WORKFLOW ####
 
-# Prepare the predicted and observed tree datasets for comparison by adding the necessary attributes (including: whether in internally buffered area, which predicted tree the observed tree is matched to) and projecting the predicted tree dataset to the observed tree dataset
-# This function saves the prepared tree datasets back to their original filenames
-prep_tree_maps_for_comparison(observed_trees_filepath = observed_trees_filepath,
-                              predicted_trees_filepath = predicted_trees_filepath,
-                              plot_bound_filepath =  plot_bound_filepath,
-                              internal_plot_buffer_dist = 5) # By how many meters to buffer in from the plot edge when computing precision and recall to ensure all predicted trees have a fair chance to match to an observed tree
+# Prepare the observed tree dataset for comparison by adding the necessary attributes (including: whether in internally buffered area, which predicted tree the observed tree is matched to) and projecting the predicted tree dataset to the observed tree dataset
+# This function saves the prepared tree dataset back to its original filename
+prep_observed_tree_map_for_comparison(observed_trees_filepath = observed_trees_filepath,
+                                      plot_bound_filepath =  plot_bound_filepath,
+                                      internal_plot_buffer_dist = 5) # By how many meters to buffer in from the plot edge when computing precision and recall to ensure all predicted trees have a fair chance to match to an observed tree
+
+# Prepare the predicted tree dataset for comparison by adding the necessary attributes (including: whether in internally buffered area, which predicted tree the observed tree is matched to) and projecting the predicted tree dataset to the observed tree dataset
+# This function saves the prepared tree dataset back to its original filename
+prep_predicted_tree_map_for_comparison(predicted_trees_filepath = predicted_trees_filepath,
+                                       plot_bound_filepath =  plot_bound_filepath,
+                                       internal_plot_buffer_dist = 5) # By how many meters to buffer in from the plot edge when computing precision and recall to ensure all predicted trees have a fair chance to match to an observed tree
 
 # This function saves (in tmp_dir) a gpkg of the observed trees, with a column indicating which predicted tree (if any) it was matched to
 match_trees(observed_trees_filepath = observed_trees_filepath,
