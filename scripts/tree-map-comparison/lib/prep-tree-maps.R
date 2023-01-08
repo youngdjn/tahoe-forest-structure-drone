@@ -42,12 +42,16 @@ prep_tree_maps_for_comparison = function(observed_trees_filepath,
   # Assign the trees an attribute that designates whether they are within an internally-buffered region
   predicted_trees$internal_area = st_intersects(predicted_trees,plot_bound_internal, sparse=FALSE) %>% as.vector
   
+  # Standardize the naming of the 'height' field
+  if(!("height" %in% names(predicted_trees)) & ("Z" %in% names(predicted_trees))) { # the case for lidR::locate_trees
+    predicted_trees = predicted_trees |>
+      rename(height = Z)
+  }
+  
+  predicted_trees = st_zm(predicted_trees)
+  
   ## Write them both back to their originals
   st_write(predicted_trees, predicted_trees_filepath, delete_dsn = TRUE)
   st_write(observed_trees, observed_trees_filepath, delete_dsn = TRUE)
   
 }
-
-
-
-
