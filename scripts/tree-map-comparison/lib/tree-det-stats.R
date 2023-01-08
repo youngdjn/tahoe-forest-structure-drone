@@ -182,9 +182,7 @@ tree_det_stats <- function(tmp_dir,
   
   # Collect the predicted tree GPKGs (located in the interim files location) from
   # stem map comparison for all and overstory tree category (should be two files)
-  map_files <- list.files(tmp_dir,
-                          full.names = TRUE, pattern = paste0(".*", predicted_tree_dataset_name,".*.gpkg$")
-  )
+  map_files <- list.files(tmp_dir, full.names = TRUE, pattern = paste0(".*", predicted_tree_dataset_name,"_matched.*.gpkg$") )
   
   match_stats_i <- list()
   
