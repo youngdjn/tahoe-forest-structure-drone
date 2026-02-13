@@ -9,7 +9,7 @@ library(furrr)
 library(tidyverse)
 
 ## Convenience functions ####
-source(here("scripts/convenience_functions.R"))
+source(here("scripts/convenience-functions.R"))
 
 
 #### Main function defs ####
