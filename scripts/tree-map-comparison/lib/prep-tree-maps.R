@@ -36,8 +36,7 @@ prep_observed_tree_map_for_comparison = function(observed_trees_filepath,
 
 
 
-prep_predicted_tree_map_for_comparison = function(observed_trees_filepath,
-                                                  predicted_trees_filepath,
+prep_predicted_tree_map_for_comparison = function(predicted_trees_filepath,
                                                   plot_bound_filepath,
                                                   internal_plot_buffer_dist) {
   
@@ -51,7 +50,7 @@ prep_predicted_tree_map_for_comparison = function(observed_trees_filepath,
   ### Read in predicted (drone-detected) trees and prepare them for comparison to observed trees ###
   #      Project them to the observed trees dataset projection, and assign them unique IDs
   predicted_trees = st_read(predicted_trees_filepath) %>%
-    st_transform(st_crs(observed_trees))
+    st_transform(3310)
   
   predicted_trees = predicted_trees %>%
     mutate(predicted_tree_id = 1:nrow(predicted_trees))

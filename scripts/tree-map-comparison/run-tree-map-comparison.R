@@ -6,6 +6,7 @@ library(here)
 #### Get data dir ####
 # The root of the data directory
 data_dir = readLines(here("data_dir.txt"), n=1)
+data_dir = "/ofo-share/scratch/derek/emerald-point-eval-testing/"
 
 ## Conveinence functions ##
 # Most importantly, this defines a function 'datadir' that prepends any relative file path with the absolute path to the data directory (specified in data-dir.txt)
@@ -27,6 +28,16 @@ observed_trees_filepath = datadir("ground_truth_stem_map/rectified/ept_trees_01_
 predicted_trees_filepath = datadir("detected_trees_example/paramset14_1016_20201021T0648_dsm_chm-vwf_196.geojson")
 # Path to the field plot boundary. This defines the outer edge of the field (observed trees) plot. It is assumed that the predicted tree stem map extends at least to this boundary if not beyond.
 plot_bound_filepath =  datadir("study_area_perimeter/ground_map_mask_precise.geojson")
+
+observed_trees_filepath = datadir("inputs/ept_trees_01_rectified (1).geojson")
+# Path to the predicted (drone) stem map. It is assumed that this stem map includes trees with heights down to 50% of the minimum height class evaluated (currently hard-coded at 10 m, so heights down to at last 5 m). If the dataset has smaller trees, removing them first will make this run faster.
+predicted_trees_filepath = datadir("derived/vwf_detected.gpkg")
+# Path to the field plot boundary. This defines the outer edge of the field (observed trees) plot. It is assumed that the predicted tree stem map extends at least to this boundary if not beyond.
+plot_bound_filepath =  datadir("inputs/ground_map_mask_precise.geojson")
+
+# observed_trees_filepath = "/ofo-share/scratch/david/rerun_emerald_point/inputs/ept_trees_01_rectified (1).geojson"
+# predicted_trees_filepath = "/ofo-share/scratch/david/rerun_emerald_point/derived/vwf_detected.gpkg"
+# plot_bound_filepath = "/ofo-share/scratch/david/rerun_emerald_point/inputs/ground_map_mask_precise.geojson"
 
 # Location of temp directory (holds intermediate files between the comparison steps) and the directory for comparison outputs
 tmp_dir = datadir("temp")
