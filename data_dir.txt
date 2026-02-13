@@ -1,1 +1,1 @@
-~/Documents/repo_data_local/optimizing-aerial-forest-mapping/
+/ofo-share/scratch/derek/emerald-point-eval-testing/
